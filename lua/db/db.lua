@@ -4,7 +4,7 @@ local db = {}
 local sqlite = nil -- Will be set by C binding
 
 function db.init(path)
-	path = path or "/data/moonshot.db"
+	path = path or "/data/moondeck.db"
 	sqlite = sqlite_open(path)
 
 	if not sqlite then

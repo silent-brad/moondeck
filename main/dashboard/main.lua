@@ -1,5 +1,5 @@
 --[[
-Moonshot Cyberpunk Dashboard
+Moondeck
 Main entry point - coordinates all components
 --]]
 
@@ -116,7 +116,7 @@ function dashboard.draw()
 	end
 
 	ui.clear()
-	ui.draw_header("MOONSHOT DASHBOARD")
+	ui.draw_header("MOONDECK DASHBOARD")
 
 	ui.draw_panel(ui.panels.weather, "WEATHER", function(x, y, w, h)
 		if weather_mod then
@@ -183,7 +183,7 @@ function dashboard.draw_status_bar()
 end
 
 function dashboard.init()
-	print("Initializing Moonshot Dashboard...")
+	print("Initializing Moondeck Dashboard...")
 
 	local status = dashboard.load_modules()
 	print(
@@ -238,7 +238,7 @@ end
 function dashboard.draw_splash()
 	if not ui then
 		display.clear(display.BLACK)
-		display.text_font(300, 200, "MOONSHOT", display.CYAN, display.FONT_GARAMOND_20)
+		display.text_font(300, 200, "MOONDECK", display.CYAN, display.FONT_GARAMOND_20)
 		display.text_font(280, 230, "Cyberpunk Dashboard", display.WHITE, display.FONT_GARAMOND_20)
 		display.text_font(280, 260, "Connecting...", display.YELLOW, display.FONT_INTER_20)
 		return
@@ -262,7 +262,7 @@ function dashboard.draw_splash()
 	display.line(cx - 200, cy + 80, cx - 180, cy + 60, t.accent_cyan)
 	display.line(cx + 200, cy + 80, cx + 180, cy + 60, t.accent_cyan)
 
-	display.text_font(cx - 60, cy - 30, "MOONSHOT", t.accent_cyan, display.FONT_GARAMOND_20)
+	display.text_font(cx - 60, cy - 30, "MOONDECK", t.accent_cyan, display.FONT_GARAMOND_20)
 	display.text_font(cx - 90, cy, "CYBERPUNK DASHBOARD", t.accent_magenta, display.FONT_GARAMOND_20)
 	display.text_font(cx - 55, cy + 30, "v1.0.0", t.text_secondary, display.FONT_INTER_20)
 

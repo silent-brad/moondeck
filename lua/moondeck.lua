@@ -1,12 +1,12 @@
 --[[
-Moonshot Dashboard - Main Lua Entry Point
+Moondeck - Main Lua Entry Point
 Initializes all modules and starts the dashboard
 --]]
 
 local M = {}
 
 function M.init()
-	print("Initializing Moonshot modules...")
+	print("Initializing Moondeck modules...")
 
 	-- Load core modules
 	local ok, err
@@ -36,7 +36,7 @@ function M.init()
 		print("Failed to load store: " .. tostring(M.store))
 	end
 
-	print("Moonshot modules initialized")
+	print("Moondeck modules initialized")
 	return true
 end
 

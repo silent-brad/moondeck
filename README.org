@@ -1,10 +1,13 @@
-#+title: Moonshot Dashboard
-#+description: My personal dashboard in Lua (and Nix) for an ESP-32 based 5-inch LCD display.
-#+author: [[https://dev.knightoffaith.systems][Brad White]]
-#+repo: https://github.com/silent-brad/moonshot-dashboard
-#+date: 2026-02-23
+#+TITLE: Moondeck
+#+DESCRIPTION: My personal dashboard in Lua (and Nix) for an ESP-32 based 5-inch LCD display.
+#+AUTHOR: [[https://dev.knightoffaith.systems][Brad White]]
+#+REPOSITORY: https://github.com/silent-brad/moondeck
+#+DATE: 2026-03-02
 
 My personal dashboard in Lua (and Nix) for an ESP-32 based 5-inch LCD display.
+
+** NOTE
+  Must have Nix installed as well as flakes enabled.
 
 ** Build and Flash
 #+begin_src sh

@@ -1,10 +1,10 @@
-#+title: Moonshot Dashboard Architecture
+#+title: Moondeck Architecture
 #+author: Brad White
 #+date: 2026-02-24
 
 * Overview
 
-This document outlines the architecture for the Moonshot Dashboard, a modular widget-based
+This document outlines the architecture for the Moondeck, a modular widget-based
 display system for ESP32-based LCD displays. Inspired by [[https://trmnl.com/][TRMNL]], but adapted for:
 
 - *Color LCD displays* (800×480 RGB565) instead of e-ink
@@ -14,7 +14,7 @@ display system for ESP32-based LCD displays. Inspired by [[https://trmnl.com/][T
 
 ** Design Philosophy
 
-| TRMNL                           | Moonshot                          |
+| TRMNL                           | Moondeck                          |
 |---------------------------------+-----------------------------------|
 | E-ink (1-2 bit grayscale)       | Color LCD (RGB565, 16-bit)        |
 | HTML/CSS + Liquid templates     | Lua component library             |
@@ -91,7 +91,7 @@ return {
     -- Database settings
     database = {
         enabled = true,
-        path = "/data/moonshot.db",
+        path = "/data/moondeck.db",
         cache_ttl = 3600,  -- seconds
     },
 }

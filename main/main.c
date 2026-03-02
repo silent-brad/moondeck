@@ -1,6 +1,6 @@
 /*
  * Lua RTOS for CrowPanel ESP32-S3 5-inch Display
- * Main entry point - Moonshot Cyberpunk Dashboard v2
+ * Main entry point - Moondeck
  */
 
 #include <stdio.h>
@@ -19,8 +19,8 @@
 static const char *TAG = "LuaRTOS";
 
 /* Core */
-extern const uint8_t moonshot_lua_start[] asm("_binary_moonshot_lua_start");
-extern const uint8_t moonshot_lua_end[] asm("_binary_moonshot_lua_end");
+extern const uint8_t moondeck_lua_start[] asm("_binary_moondeck_lua_start");
+extern const uint8_t moondeck_lua_end[] asm("_binary_moondeck_lua_end");
 
 extern const uint8_t app_lua_start[] asm("_binary_app_lua_start");
 extern const uint8_t app_lua_end[] asm("_binary_app_lua_end");
@@ -199,6 +199,28 @@ extern const uint8_t env_end[] asm("_binary__env_end");
 extern const uint8_t getenv_lua_start[] asm("_binary_getenv_lua_start");
 extern const uint8_t getenv_lua_end[] asm("_binary_getenv_lua_end");
 
+/* Plugin Configs */
+extern const uint8_t weather_config_lua_start[] asm("_binary_weather_config_lua_start");
+extern const uint8_t weather_config_lua_end[] asm("_binary_weather_config_lua_end");
+
+extern const uint8_t btc_config_lua_start[] asm("_binary_btc_config_lua_start");
+extern const uint8_t btc_config_lua_end[] asm("_binary_btc_config_lua_end");
+
+extern const uint8_t verse_config_lua_start[] asm("_binary_verse_config_lua_start");
+extern const uint8_t verse_config_lua_end[] asm("_binary_verse_config_lua_end");
+
+extern const uint8_t todo_config_lua_start[] asm("_binary_todo_config_lua_start");
+extern const uint8_t todo_config_lua_end[] asm("_binary_todo_config_lua_end");
+
+extern const uint8_t calendar_config_lua_start[] asm("_binary_calendar_config_lua_start");
+extern const uint8_t calendar_config_lua_end[] asm("_binary_calendar_config_lua_end");
+
+extern const uint8_t clock_config_lua_start[] asm("_binary_clock_config_lua_start");
+extern const uint8_t clock_config_lua_end[] asm("_binary_clock_config_lua_end");
+
+extern const uint8_t system_config_lua_start[] asm("_binary_system_config_lua_start");
+extern const uint8_t system_config_lua_end[] asm("_binary_system_config_lua_end");
+
 static void register_embedded_module(lua_State *L, const char *name,
                                       const uint8_t *start, const uint8_t *end)
 {
@@ -335,8 +357,17 @@ static void register_all_modules(lua_State *L)
     register_embedded_module(L, "store", store_lua_start, store_lua_end);
     register_embedded_module(L, "db", db_lua_start, db_lua_end);
     
+    /* Plugin Configs */
+    register_embedded_module(L, "config.plugins.weather", weather_config_lua_start, weather_config_lua_end);
+    register_embedded_module(L, "config.plugins.btc", btc_config_lua_start, btc_config_lua_end);
+    register_embedded_module(L, "config.plugins.verse", verse_config_lua_start, verse_config_lua_end);
+    register_embedded_module(L, "config.plugins.todo", todo_config_lua_start, todo_config_lua_end);
+    register_embedded_module(L, "config.plugins.calendar", calendar_config_lua_start, calendar_config_lua_end);
+    register_embedded_module(L, "config.plugins.clock", clock_config_lua_start, clock_config_lua_end);
+    register_embedded_module(L, "config.plugins.system", system_config_lua_start, system_config_lua_end);
+    
     /* App entry point */
-    register_embedded_module(L, "moonshot", moonshot_lua_start, moonshot_lua_end);
+    register_embedded_module(L, "moondeck", moondeck_lua_start, moondeck_lua_end);
     register_embedded_module(L, "app", app_lua_start, app_lua_end);
     
     ESP_LOGI(TAG, "All modules registered");
@@ -347,7 +378,7 @@ void wifi_preinit(void);
 
 void app_main(void)
 {
-    ESP_LOGI(TAG, "Moonshot Cyberpunk Dashboard v2");
+    ESP_LOGI(TAG, "Moondeck v1");
     
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -382,7 +413,7 @@ void app_main(void)
         lua_modules_init(L);
         register_all_modules(L);
         
-        ESP_LOGI(TAG, "Running Moonshot Dashboard...");
+        ESP_LOGI(TAG, "Running Moondeck...");
         lua_core_dostring("require('app').run()");
     }
     

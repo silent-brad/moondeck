@@ -5,7 +5,7 @@ idf_component_register(
     PRIV_REQUIRES nvs_flash esp_psram
     EMBED_TXTFILES 
         # Core
-        "../lua/moonshot.lua"
+        "../lua/moondeck.lua"
         "../lua/app.lua"
 
         # UI - Core
@@ -88,6 +88,15 @@ idf_component_register(
         "../config/layouts/focus.lua"
         "../config/layouts/layout_grid.lua"
         "../config/.env"
+
+        # Plugin Configs
+        "../config/plugins/weather_config.lua"
+        "../config/plugins/btc_config.lua"
+        "../config/plugins/verse_config.lua"
+        "../config/plugins/todo_config.lua"
+        "../config/plugins/calendar_config.lua"
+        "../config/plugins/clock_config.lua"
+        "../config/plugins/system_config.lua"
 
         # Existing
         "getenv.lua"

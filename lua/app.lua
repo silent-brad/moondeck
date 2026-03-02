@@ -1,5 +1,5 @@
 --[[
-Moonshot Dashboard Application
+Moondeck Application
 Main application loop with screen management and touch handling
 --]]
 
@@ -84,7 +84,7 @@ function app.load_modules()
 end
 
 function app.init()
-	print("Initializing Moonshot Dashboard...")
+	print("Initializing Moondeck...")
 
 	if not app.load_config() then
 		print("Config load failed, using defaults")
@@ -308,9 +308,9 @@ function app.draw_splash()
 	display.rect(cx - 200, cy - 80, 400, 160, 0x0841, true)
 	display.rect(cx - 200, cy - 80, 400, 160, cyan, false)
 
-	display.text_font(cx - 80, cy - 30, "MOONSHOT", cyan, display.FONT_GARAMOND_20)
+	display.text_font(cx - 80, cy - 30, "MOONDECK", cyan, display.FONT_GARAMOND_20)
 	display.text_font(cx - 120, cy, "CYBERPUNK DASHBOARD", magenta, display.FONT_GARAMOND_20)
-	display.text_font(cx - 30, cy + 30, "v2.0.0", gray, display.FONT_INTER_20)
+	display.text_font(cx - 30, cy + 30, "v1.0.0", gray, display.FONT_INTER_20)
 	display.text_font(cx - 60, cy + 55, "Connecting...", yellow, display.FONT_INTER_20)
 end
 

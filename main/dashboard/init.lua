@@ -1,5 +1,5 @@
 --[[
-Moonshot Cyberpunk Dashboard - Main Entry
+Moondeck - Main Entry
 --]]
 
 local dashboard = {}
