@@ -1,6 +1,0 @@
-#+title: Task list for Moonshot display
-
-** ..
-- [x] Add fonts
-- [x] Remove env code from config
-- [x] Fix minute loading blank screen
