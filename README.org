@@ -16,9 +16,16 @@ Cyberdeck display system for ESP32-S3 color LCD panels, configured entirely in L
 - 🦀 *Built with Rust* - Safe, fast, and reliable
 
 * Stack
+#+CAPTION: Rust
+#+ATTR_HTML: :width 30px :height 30px
 [[https://api.iconify.design/logos:rust.svg]]
-[[https://api.iconify.design/logos:esp32.svg]]
+
+#+CAPTION: Lua
+#+ATTR_HTML: :width 30px :height 30px
 [[https://api.iconify.design/logos:lua.svg]]
+
+#+CAPTION: Nix
+#+ATTR_HTML: :width 30px :height 30px
 [[https://api.iconify.design/vscode-icons:file-type-nix.svg]]
 
 * Display
