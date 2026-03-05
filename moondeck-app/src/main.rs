@@ -193,7 +193,7 @@ fn run_main_loop(
                     10,
                     DISPLAY_HEIGHT as i32 - 20,
                     &page_indicator,
-                    Color::GRAY,
+                    Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
                     Font::Small,
                 );
 
@@ -202,7 +202,7 @@ fn run_main_loop(
                     DISPLAY_WIDTH as i32 - 80,
                     DISPLAY_HEIGHT as i32 - 20,
                     &fps_text,
-                    Color::GRAY,
+                    Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
                     Font::Small,
                 );
 

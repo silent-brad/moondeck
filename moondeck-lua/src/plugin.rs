@@ -40,15 +40,15 @@ impl WidgetPlugin {
             return Ok(());
         }
 
-        draw_ctx.fill_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADD0B3").unwrap_or(Color::GREEN));
+        draw_ctx.fill_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#58855C").unwrap_or(Color::GREEN));
 
         let title = format!("Widget: {}", self.module);
         draw_ctx.text(ctx.x + 20, ctx.y + 40, &title, Color::WHITE, Font::XLarge);
 
         let info = format!("{}x{} @ ({},{})", ctx.width, ctx.height, ctx.x, ctx.y);
-        draw_ctx.text(ctx.x + 20, ctx.y + 70, &info, Color::GRAY, Font::Medium);
+        draw_ctx.text(ctx.x + 20, ctx.y + 70, &info, Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY), Font::Medium);
 
-        draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#2E6F40").unwrap_or(Color::GREEN), 1);
+        draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADEBB3").unwrap_or(Color::GREEN), 1);
 
         Ok(())
     }

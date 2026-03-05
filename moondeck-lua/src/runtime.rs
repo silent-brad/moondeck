@@ -62,7 +62,7 @@ fn create_demo_pages() -> Vec<Page> {
 
     vec![
         Page::new("home", "Home")
-            .with_background("#FF0000")
+            .with_background("#0D3311")
             .with_widget(
                 WidgetInstance::new("clock", 20, 20, 360, 180)
                     .with_update_interval(1000),
@@ -80,7 +80,7 @@ fn create_demo_pages() -> Vec<Page> {
                     //.with_update_interval(60000),
             ),
         Page::new("info", "System Info")
-            .with_background("#16213e")
+            .with_background("#0D3311")
             .with_widget(
                 WidgetInstance::new("sysinfo", 20, 20, 760, 420)
                     .with_update_interval(2000),
