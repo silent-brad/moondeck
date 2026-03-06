@@ -2,7 +2,6 @@
 -- This file is loaded before pages.lua
 
 print("Moondeck v2 initializing...")
-print("Screen: " .. device.screen_width() .. "x" .. device.screen_height())
 
 -- Global configuration
 config = {

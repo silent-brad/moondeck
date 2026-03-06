@@ -177,7 +177,7 @@ fn run_main_loop(
             .current_page()
             .and_then(|p| p.background_color.as_ref())
             .and_then(|c| Color::from_hex(c))
-            .unwrap_or(Color::RED);
+            .unwrap_or(Color::GRAY);
 
         {
             let mut draw_ctx = DrawContext::new(&mut framebuffer);
@@ -195,7 +195,7 @@ fn run_main_loop(
                     DISPLAY_HEIGHT as i32 - 20,
                     &page_indicator,
                     Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
-                    TtfFont::inter(24),
+                    TtfFont::inter(18),
                 );
 
                 let fps_text = format!("FPS: {:.1}", frame_timer.fps());
@@ -204,7 +204,7 @@ fn run_main_loop(
                     DISPLAY_HEIGHT as i32 - 20,
                     &fps_text,
                     Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
-                    TtfFont::inter(24),
+                    TtfFont::inter(18),
                 );
 
                 for (plugin, widget) in plugins.iter() {

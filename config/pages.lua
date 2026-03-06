@@ -6,7 +6,7 @@ return {
 		{
 			id = "home",
 			title = "Home",
-			background = "#1a1a2e",
+			background = "#0D3311",
 			widgets = {
 				{
 					module = "widgets.clock",
@@ -44,7 +44,7 @@ return {
 		{
 			id = "weather",
 			title = "Weather",
-			background = "#16213e",
+			background = "#0D3311",
 			widgets = {
 				{
 					module = "widgets.weather",
@@ -63,7 +63,7 @@ return {
 		{
 			id = "system",
 			title = "System",
-			background = "#0f0f23",
+			background = "#0D3311",
 			widgets = {
 				{
 					module = "widgets.sysinfo",

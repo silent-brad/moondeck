@@ -44,10 +44,10 @@ impl WidgetPlugin {
         draw_ctx.fill_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#58855C").unwrap_or(Color::GREEN));
 
         let title = format!("Widget: {}", self.module);
-        draw_ctx.text_ttf(ctx.x + 20, ctx.y + 40, &title, Color::WHITE, TtfFont::garamond_italic(44));
+        draw_ctx.text_ttf(ctx.x + 20, ctx.y + 40, &title, Color::WHITE, TtfFont::garamond_italic(38));
 
         let info = format!("{}x{} @ ({},{})", ctx.width, ctx.height, ctx.x, ctx.y);
-        draw_ctx.text_ttf(ctx.x + 20, ctx.y + 70, &info, Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY), TtfFont::inter(38));
+        draw_ctx.text_ttf(ctx.x + 20, ctx.y + 70, &info, Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY), TtfFont::inter(24));
 
         draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADEBB3").unwrap_or(Color::GREEN), 1);
 
