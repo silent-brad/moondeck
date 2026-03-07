@@ -297,6 +297,46 @@ fn run_main_loop(
     let mut last_status_update: u64 = 0;
     let mut last_page_index = page_manager.current_index();
 
+    // Helper closure to process touch - polls rapidly for up to 50ms to catch swipes
+    let process_touch = |touch_controller: &mut TouchController, gesture_processor: &mut GestureProcessor, page_manager: &mut PageManager| {
+        let start = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        
+        // Poll for up to 50ms to catch fast swipes
+        loop {
+            let current_ms = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|d| d.as_millis() as u64)
+                .unwrap_or(0);
+            
+            // Poll touch
+            match touch_controller.poll() {
+                Ok(Some(touch_event)) => {
+                    if let Some(gesture) = gesture_processor.process(touch_event, current_ms) {
+                        let event = Event::Gesture(gesture.clone());
+                        if page_manager.handle_event(&event) {
+                            match gesture {
+                                Gesture::SwipeLeft => info!("Swiped left - now on page {}", page_manager.current_index() + 1),
+                                Gesture::SwipeRight => info!("Swiped right - now on page {}", page_manager.current_index() + 1),
+                                _ => {}
+                            }
+                        }
+                    }
+                }
+                Ok(None) => {
+                    // No touch event - check if we should keep polling
+                    if current_ms - start > 50 {
+                        break;
+                    }
+                    FreeRtos::delay_ms(5);
+                }
+                Err(_) => break,
+            }
+        }
+    };
+
     info!("Main loop running - press Ctrl+C to exit");
 
     loop {
@@ -306,6 +346,9 @@ fn run_main_loop(
             .unwrap_or(0);
 
         let delta_ms = frame_timer.tick(current_ms);
+
+        // Process touch at start of frame
+        process_touch(touch_controller, &mut gesture_processor, page_manager);
 
         // Update WiFi and system status every 5 seconds
         if current_ms - last_status_update >= 5000 {
@@ -329,19 +372,8 @@ fn run_main_loop(
             }
         }
 
-        // Process all pending touch events
-        while let Ok(Some(touch_event)) = touch_controller.poll() {
-            if let Some(gesture) = gesture_processor.process(touch_event, current_ms) {
-                let event = Event::Gesture(gesture.clone());
-                if page_manager.handle_event(&event) {
-                    match gesture {
-                        Gesture::SwipeLeft => info!("Swiped left - now on page {}", page_manager.current_index() + 1),
-                        Gesture::SwipeRight => info!("Swiped right - now on page {}", page_manager.current_index() + 1),
-                        _ => {}
-                    }
-                }
-            }
-        }
+        // Process touch after WiFi update
+        process_touch(touch_controller, &mut gesture_processor, page_manager);
 
         // Log page changes
         if page_manager.current_index() != last_page_index {
@@ -349,10 +381,14 @@ fn run_main_loop(
             last_page_index = page_manager.current_index();
         }
 
-        // Update all plugins
+        // Update plugins with touch polling between each one
         for (plugin, _widget) in plugins.iter() {
+            process_touch(touch_controller, &mut gesture_processor, page_manager);
             let _ = plugin.update(lua_runtime, delta_ms);
         }
+        
+        // Process touch after all plugin updates
+        process_touch(touch_controller, &mut gesture_processor, page_manager);
 
         // Get theme colors for UI elements
         let ui_text_color = Color::from_hex(ThemeColors::text_muted()).unwrap_or(Color::GRAY);

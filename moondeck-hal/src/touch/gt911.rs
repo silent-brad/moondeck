@@ -16,6 +16,10 @@ pub struct TouchController<'d> {
     i2c: I2cDriver<'d>,
     address: u8,
     last_touch: Option<TouchEvent>,
+    start_x: i32,
+    start_y: i32,
+    last_x: i32,
+    last_y: i32,
     width: u32,
     height: u32,
 }
@@ -46,6 +50,10 @@ impl<'d> TouchController<'d> {
             i2c: i2c_driver,
             address: GT911_ADDR_PRIMARY,
             last_touch: None,
+            start_x: 0,
+            start_y: 0,
+            last_x: 0,
+            last_y: 0,
             width,
             height,
         };
@@ -113,23 +121,26 @@ impl<'d> TouchController<'d> {
         let num_touches = status[0] & 0x0F;
         let buffer_ready = (status[0] & 0x80) != 0;
 
-        if !buffer_ready {
-            return Ok(None);
+        if buffer_ready {
+            self.write_register(GT911_TOUCH_STATUS_REG, &[0])?;
         }
 
-        self.write_register(GT911_TOUCH_STATUS_REG, &[0])?;
-
         if num_touches == 0 {
-            if let Some(last) = self.last_touch.take() {
+            // No touch - emit Ended if we had an active touch
+            if self.last_touch.take().is_some() {
+                // Return the last known position (most recent position before lift)
+                log::info!("Touch ended: start=({},{}) last=({},{})", 
+                    self.start_x, self.start_y, self.last_x, self.last_y);
                 return Ok(Some(TouchEvent {
-                    x: last.x,
-                    y: last.y,
+                    x: self.last_x,
+                    y: self.last_y,
                     phase: TouchPhase::Ended,
                 }));
             }
             return Ok(None);
         }
 
+        // We have a touch - read the current position
         let point_data = self.read_register(GT911_POINT1_REG, 8)?;
 
         let x = ((point_data[1] as u32) | ((point_data[2] as u32) << 8)) as i32;
@@ -138,16 +149,23 @@ impl<'d> TouchController<'d> {
         let x = x.clamp(0, self.width as i32 - 1);
         let y = y.clamp(0, self.height as i32 - 1);
 
-        let phase = if self.last_touch.is_some() {
-            TouchPhase::Moved
+        // Track latest position for Ended events
+        self.last_x = x;
+        self.last_y = y;
+
+        if self.last_touch.is_some() {
+            // Already tracking - this is a move
+            let event = TouchEvent { x, y, phase: TouchPhase::Moved };
+            self.last_touch = Some(event);
+            Ok(Some(event))
         } else {
-            TouchPhase::Started
-        };
-
-        let event = TouchEvent { x, y, phase };
-        self.last_touch = Some(event);
-
-        Ok(Some(event))
+            // New touch - record start position
+            self.start_x = x;
+            self.start_y = y;
+            let event = TouchEvent { x, y, phase: TouchPhase::Started };
+            self.last_touch = Some(event);
+            Ok(Some(event))
+        }
     }
 
     pub fn is_touched(&mut self) -> Result<bool> {

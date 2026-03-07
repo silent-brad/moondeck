@@ -42,6 +42,8 @@ pub struct GestureDetector {
     current_y: i32,
     threshold_px: i32,
     long_press_ms: u64,
+    last_swipe_time: u64,
+    swipe_cooldown_ms: u64,
 }
 
 impl Default for GestureDetector {
@@ -52,8 +54,10 @@ impl Default for GestureDetector {
             start_time: None,
             current_x: 0,
             current_y: 0,
-            threshold_px: 30,
-            long_press_ms: 500,
+            threshold_px: 8,
+            long_press_ms: 800,
+            last_swipe_time: 0,
+            swipe_cooldown_ms: 300,
         }
     }
 }
@@ -92,9 +96,18 @@ impl GestureDetector {
                 self.start_y = None;
                 self.start_time = None;
 
-                let dx = self.current_x - sx;
-                let dy = self.current_y - sy;
+                // Use Ended event position directly (more reliable than tracked current position)
+                let end_x = touch.x;
+                let end_y = touch.y;
+
+                let dx = end_x - sx;
+                let dy = end_y - sy;
                 let dt = current_time_ms.saturating_sub(st);
+
+                log::info!(
+                    "Gesture calc: start=({},{}) end=({},{}) dx={} dy={} dt={}ms threshold={}",
+                    sx, sy, end_x, end_y, dx, dy, dt, self.threshold_px
+                );
 
                 let abs_dx = dx.abs();
                 let abs_dy = dy.abs();
@@ -107,7 +120,12 @@ impl GestureDetector {
                     }
                 }
 
-                if abs_dx > abs_dy {
+                // Check cooldown to prevent multiple swipes
+                if current_time_ms.saturating_sub(self.last_swipe_time) < self.swipe_cooldown_ms {
+                    return Some(Gesture::Tap { x: sx, y: sy });
+                }
+
+                let gesture = if abs_dx > abs_dy {
                     if dx > self.threshold_px {
                         Some(Gesture::SwipeRight)
                     } else if dx < -self.threshold_px {
@@ -121,7 +139,12 @@ impl GestureDetector {
                     Some(Gesture::SwipeUp)
                 } else {
                     None
+                };
+
+                if gesture.is_some() {
+                    self.last_swipe_time = current_time_ms;
                 }
+                gesture
             }
         }
     }
