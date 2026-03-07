@@ -16,6 +16,11 @@ pub fn get_current_theme() -> String {
     CURRENT_THEME.read().unwrap().clone()
 }
 
+/// Get the default theme name (from config/theme.lua)
+pub fn get_default_theme() -> &'static str {
+    DEFAULT_THEME
+}
+
 /// Get the current theme's background color
 pub fn get_theme_bg_primary() -> &'static str {
     let theme_name = CURRENT_THEME.read().unwrap();
@@ -27,6 +32,101 @@ pub fn get_theme_bg_primary() -> &'static str {
 #[allow(dead_code)]
 pub fn get_theme_names() -> &'static [&'static str] {
     THEME_NAMES
+}
+
+/// Theme color accessors for Rust code (uses current theme or default if not set)
+#[allow(dead_code)]
+pub struct ThemeAccessors;
+
+impl ThemeColors {
+    fn get_current_theme_name() -> String {
+        let theme_name = CURRENT_THEME.read().unwrap();
+        if theme_name.is_empty() {
+            DEFAULT_THEME.to_string()
+        } else {
+            theme_name.clone()
+        }
+    }
+
+    pub fn bg_primary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).bg_primary
+    }
+
+    pub fn bg_secondary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).bg_secondary
+    }
+
+    pub fn bg_tertiary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).bg_tertiary
+    }
+
+    pub fn bg_card() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).bg_card
+    }
+
+    pub fn text_primary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).text_primary
+    }
+
+    pub fn text_secondary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).text_secondary
+    }
+
+    pub fn text_muted() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).text_muted
+    }
+
+    pub fn text_accent() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).text_accent
+    }
+
+    pub fn accent_primary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).accent_primary
+    }
+
+    pub fn accent_secondary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).accent_secondary
+    }
+
+    pub fn accent_success() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).accent_success
+    }
+
+    pub fn accent_warning() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).accent_warning
+    }
+
+    pub fn accent_error() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).accent_error
+    }
+
+    pub fn border_primary() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).border_primary
+    }
+
+    pub fn border_accent() -> &'static str {
+        let name = Self::get_current_theme_name();
+        get_theme(&name).border_accent
+    }
+}
+
+/// Set the current theme by name (for early initialization before Lua runs)
+pub fn set_current_theme(name: &str) {
+    *CURRENT_THEME.write().unwrap() = name.to_string();
 }
 
 fn create_theme_colors_table<'gc>(ctx: piccolo::Context<'gc>, theme_name: &str) -> Table<'gc> {

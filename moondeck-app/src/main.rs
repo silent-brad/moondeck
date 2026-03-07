@@ -12,8 +12,11 @@ use moondeck_core::gfx::{Color, DrawContext, DISPLAY_HEIGHT, DISPLAY_WIDTH};
 use moondeck_core::ui::{Event, Gesture, PageManager, WidgetInstance};
 use moondeck_core::TtfFont;
 use moondeck_core::util::FrameTimer;
-use moondeck_hal::{Display, EnvConfig, FileSystem, Framebuffer, GestureProcessor, TouchController};
-use moondeck_lua::{LuaRuntime, WidgetPlugin};
+use moondeck_hal::{Display, EnvConfig, FileSystem, Framebuffer, GestureProcessor, TouchController, WifiManager};
+use moondeck_lua::{
+    get_default_theme, init_boot_time, set_current_theme, set_system_info, set_wifi_status,
+    LuaRuntime, ThemeColors, WidgetPlugin,
+};
 
 fn main() -> Result<()> {
     esp_idf_sys::link_patches();
@@ -22,9 +25,16 @@ fn main() -> Result<()> {
     info!("=== Moondeck v2 Starting ===");
     info!("Display: {}x{}", DISPLAY_WIDTH, DISPLAY_HEIGHT);
 
+    // Initialize boot time for uptime tracking
+    init_boot_time();
+
+    // Set the default theme early so loading screen uses correct colors
+    set_current_theme(get_default_theme());
+    info!("Using theme: {}", get_default_theme());
+
     let peripherals = Peripherals::take().context("Failed to take peripherals")?;
-    let _sysloop = EspSystemEventLoop::take().context("Failed to get event loop")?;
-    let _nvs = EspDefaultNvsPartition::take().ok();
+    let sysloop = EspSystemEventLoop::take().context("Failed to get event loop")?;
+    let nvs = EspDefaultNvsPartition::take().ok();
 
     info!("Initializing display...");
     // Elecrow CrowPanel 5-inch (800x480) RGB565 pinout
@@ -57,6 +67,12 @@ fn main() -> Result<()> {
         Some(peripherals.pins.gpio2.into()), // Backlight
     )?;
 
+    // Create framebuffer for loading screen
+    let mut framebuffer = Framebuffer::new();
+
+    // Show initial loading screen
+    draw_loading_screen(&mut framebuffer, &mut display, "Initializing...", None)?;
+
     info!("Initializing touch controller...");
     let mut touch_controller = TouchController::new(
         peripherals.i2c0,
@@ -68,6 +84,8 @@ fn main() -> Result<()> {
     )?;
     info!("Touch controller initialized");
 
+    draw_loading_screen(&mut framebuffer, &mut display, "Mounting filesystem...", None)?;
+
     info!("Mounting filesystem...");
     let fs = match FileSystem::mount("storage", "/data") {
         Ok(fs) => Some(fs),
@@ -76,6 +94,8 @@ fn main() -> Result<()> {
             None
         }
     };
+
+    draw_loading_screen(&mut framebuffer, &mut display, "Loading configuration...", None)?;
 
     info!("Loading environment configuration...");
     let env = if let Some(ref fs) = fs {
@@ -104,14 +124,71 @@ fn main() -> Result<()> {
         }
     };
 
+    // Check if theme is specified in env and update
+    if let Some(theme_name) = env.get("THEME") {
+        set_current_theme(theme_name);
+        info!("Theme set from config: {}", theme_name);
+    }
+
+    // Initialize WiFi if credentials are available
+    let mut wifi_manager: Option<WifiManager> = None;
+    let wifi_ssid = env.get("WIFI_SSID").unwrap_or("");
+    let wifi_password = env.get("WIFI_PASSWORD").unwrap_or("");
+
+    if !wifi_ssid.is_empty() {
+        let wifi_msg = format!("Connecting to '{}'...", wifi_ssid);
+        draw_loading_screen(&mut framebuffer, &mut display, &wifi_msg, Some("This may take a moment"))?;
+
+        info!("Connecting to WiFi '{}'...", wifi_ssid);
+        match WifiManager::new(peripherals.modem, sysloop.clone(), nvs.clone()) {
+            Ok(mut wifi) => {
+                match wifi.connect(wifi_ssid, wifi_password) {
+                    Ok(()) => {
+                        let status = wifi.status();
+                        let ip_str = status.ip.map(|ip| ip.to_string()).unwrap_or_default();
+                        let rssi = status.rssi.unwrap_or(-100) as i32;
+                        info!("WiFi connected! IP: {}", ip_str);
+                        set_wifi_status(true, wifi_ssid, &ip_str, rssi);
+                        wifi_manager = Some(wifi);
+
+                        let success_msg = format!("Connected: {}", ip_str);
+                        draw_loading_screen(&mut framebuffer, &mut display, "WiFi Connected!", Some(&success_msg))?;
+                        FreeRtos::delay_ms(500);
+                    }
+                    Err(e) => {
+                        warn!("WiFi connection failed: {}", e);
+                        set_wifi_status(false, "", "", -100);
+                        draw_loading_screen(&mut framebuffer, &mut display, "WiFi Failed", Some("Continuing without network..."))?;
+                        FreeRtos::delay_ms(1000);
+                    }
+                }
+            }
+            Err(e) => {
+                warn!("WiFi initialization failed: {}", e);
+                set_wifi_status(false, "", "", -100);
+                draw_loading_screen(&mut framebuffer, &mut display, "WiFi Error", Some("Continuing without network..."))?;
+                FreeRtos::delay_ms(1000);
+            }
+        }
+    } else {
+        info!("No WiFi credentials configured");
+        set_wifi_status(false, "", "", -100);
+    }
+
+    draw_loading_screen(&mut framebuffer, &mut display, "Initializing Lua runtime...", None)?;
+
     info!("Initializing Lua runtime...");
     let mut lua_runtime = LuaRuntime::new()?;
     lua_runtime.init(&env)?;
+
+    draw_loading_screen(&mut framebuffer, &mut display, "Loading pages...", None)?;
 
     info!("Loading pages configuration...");
     let pages = lua_runtime.load_pages()?;
     let mut page_manager = PageManager::new().with_pages(pages);
     info!("Loaded {} page(s)", page_manager.page_count());
+
+    draw_loading_screen(&mut framebuffer, &mut display, "Initializing widgets...", None)?;
 
     let mut plugins: Vec<(WidgetPlugin, WidgetInstance)> = Vec::new();
     let mut plugin_index = 0;
@@ -135,9 +212,73 @@ fn main() -> Result<()> {
     let theme_bg = Color::from_hex(&theme_bg_hex).unwrap_or(Color::BLACK);
     info!("Theme: {}, background: {}", theme_name, theme_bg_hex);
 
-    info!("Starting main loop...");
-    run_main_loop(&mut lua_runtime, &mut page_manager, &mut plugins, &mut display, &mut touch_controller, theme_bg)?;
+    draw_loading_screen(&mut framebuffer, &mut display, "Ready!", None)?;
+    FreeRtos::delay_ms(300);
 
+    info!("Starting main loop...");
+    run_main_loop(&mut lua_runtime, &mut page_manager, &mut plugins, &mut display, &mut touch_controller, wifi_manager, theme_bg, framebuffer)?;
+
+    Ok(())
+}
+
+fn draw_loading_screen(
+    framebuffer: &mut Framebuffer,
+    display: &mut Display,
+    message: &str,
+    sub_message: Option<&str>,
+) -> Result<()> {
+    // Use theme colors
+    let bg_color = Color::from_hex(ThemeColors::bg_primary()).unwrap_or(Color::BLACK);
+    let text_color = Color::from_hex(ThemeColors::text_primary()).unwrap_or(Color::WHITE);
+    let accent_color = Color::from_hex(ThemeColors::accent_primary()).unwrap_or(Color::CYAN);
+    let muted_color = Color::from_hex(ThemeColors::text_muted()).unwrap_or(Color::GRAY);
+
+    {
+        let mut draw_ctx = DrawContext::new(framebuffer);
+        draw_ctx.clear(bg_color);
+
+        // Title - using Garamond font
+        draw_ctx.text_ttf(
+            (DISPLAY_WIDTH as i32 / 2) - 100,
+            (DISPLAY_HEIGHT as i32 / 2) - 60,
+            "Moondeck",
+            accent_color,
+            TtfFont::garamond(42),
+        );
+
+        // Main message
+        let msg_width = message.len() as i32 * 8;
+        draw_ctx.text_ttf(
+            (DISPLAY_WIDTH as i32 / 2) - (msg_width / 2),
+            (DISPLAY_HEIGHT as i32 / 2) + 10,
+            message,
+            text_color,
+            TtfFont::inter(20),
+        );
+
+        // Sub message if provided
+        if let Some(sub) = sub_message {
+            let sub_width = sub.len() as i32 * 6;
+            draw_ctx.text_ttf(
+                (DISPLAY_WIDTH as i32 / 2) - (sub_width / 2),
+                (DISPLAY_HEIGHT as i32 / 2) + 45,
+                sub,
+                muted_color,
+                TtfFont::inter(16),
+            );
+        }
+
+        // Loading indicator line
+        draw_ctx.fill_rect(
+            (DISPLAY_WIDTH as i32 / 2) - 100,
+            (DISPLAY_HEIGHT as i32 / 2) + 80,
+            200,
+            3,
+            accent_color,
+        );
+    }
+
+    display.flush(framebuffer)?;
     Ok(())
 }
 
@@ -147,11 +288,14 @@ fn run_main_loop(
     plugins: &mut [(WidgetPlugin, WidgetInstance)],
     display: &mut Display,
     touch_controller: &mut TouchController,
+    wifi_manager: Option<WifiManager>,
     bg_color: Color,
+    mut framebuffer: Framebuffer,
 ) -> Result<()> {
-    let mut framebuffer = Framebuffer::new();
     let mut frame_timer = FrameTimer::new();
     let mut gesture_processor = GestureProcessor::new();
+    let mut last_status_update: u64 = 0;
+    let mut last_page_index = page_manager.current_index();
 
     info!("Main loop running - press Ctrl+C to exit");
 
@@ -163,28 +307,63 @@ fn run_main_loop(
 
         let delta_ms = frame_timer.tick(current_ms);
 
+        // Update WiFi and system status every 5 seconds
+        if current_ms - last_status_update >= 5000 {
+            last_status_update = current_ms;
+
+            // Update system info
+            let free_heap = unsafe { esp_idf_sys::esp_get_free_heap_size() };
+            set_system_info(free_heap, 240); // ESP32-S3 runs at 240 MHz
+
+            // Update WiFi status if we have a WiFi manager
+            if let Some(ref wifi) = wifi_manager {
+                let status = wifi.status();
+                let ip_str = status.ip.map(|ip| ip.to_string()).unwrap_or_default();
+                let rssi = status.rssi.unwrap_or(-100) as i32;
+                set_wifi_status(
+                    status.connected,
+                    status.ssid.as_deref().unwrap_or(""),
+                    &ip_str,
+                    rssi,
+                );
+            }
+        }
+
+        // Process touch input
         if let Ok(Some(touch_event)) = touch_controller.poll() {
             if let Some(gesture) = gesture_processor.process(touch_event, current_ms) {
-                let event = Event::Gesture(gesture);
+                let event = Event::Gesture(gesture.clone());
                 if page_manager.handle_event(&event) {
                     match gesture {
-                        Gesture::SwipeLeft => info!("Swiped left - next page"),
-                        Gesture::SwipeRight => info!("Swiped right - previous page"),
+                        Gesture::SwipeLeft => info!("Swiped left - now on page {}", page_manager.current_index() + 1),
+                        Gesture::SwipeRight => info!("Swiped right - now on page {}", page_manager.current_index() + 1),
                         _ => {}
                     }
                 }
             }
         }
 
+        // Log page changes
+        if page_manager.current_index() != last_page_index {
+            info!("Page changed: {} -> {}", last_page_index + 1, page_manager.current_index() + 1);
+            last_page_index = page_manager.current_index();
+        }
+
+        // Update all plugins
         for (plugin, _widget) in plugins.iter() {
             let _ = plugin.update(lua_runtime, delta_ms);
         }
 
+        // Get theme colors for UI elements
+        let ui_text_color = Color::from_hex(ThemeColors::text_muted()).unwrap_or(Color::GRAY);
+
+        // Render
         {
             let mut draw_ctx = DrawContext::new(&mut framebuffer);
             draw_ctx.clear(bg_color);
 
             if let Some(page) = page_manager.current_page() {
+                // Page indicator at bottom - using theme colors
                 let page_indicator = format!(
                     "Page {}/{}: {}",
                     page_manager.current_index() + 1,
@@ -195,30 +374,31 @@ fn run_main_loop(
                     10,
                     DISPLAY_HEIGHT as i32 - 20,
                     &page_indicator,
-                    Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
+                    ui_text_color,
                     TtfFont::inter(18),
                 );
 
+                // FPS counter - using theme colors
                 let fps_text = format!("FPS: {:.1}", frame_timer.fps());
                 draw_ctx.text_ttf(
                     DISPLAY_WIDTH as i32 - 80,
                     DISPLAY_HEIGHT as i32 - 20,
                     &fps_text,
-                    Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY),
+                    ui_text_color,
                     TtfFont::inter(18),
                 );
 
+                // Render widgets for current page
+                // Match by both page and widget to handle same module on multiple pages
                 for (plugin, widget) in plugins.iter() {
-                    let matches = page.widgets.iter().any(|w| w.module == widget.module);
-                    if frame_timer.frame_count() == 1 {
-                        info!(
-                            "Widget '{}': matches={}, ctx=({},{},{}x{})",
-                            widget.module, matches,
-                            widget.context.x, widget.context.y,
-                            widget.context.width, widget.context.height
-                        );
-                    }
-                    if matches {
+                    // Check if this widget belongs to the current page
+                    let belongs_to_page = page.widgets.iter().any(|w| {
+                        w.module == widget.module &&
+                        w.context.x == widget.context.x &&
+                        w.context.y == widget.context.y
+                    });
+
+                    if belongs_to_page {
                         if let Err(e) = plugin.render(lua_runtime, &widget.context, &mut draw_ctx) {
                             warn!("Render error for '{}': {}", widget.module, e);
                         }

@@ -189,6 +189,7 @@ impl WidgetPlugin {
                 let info = format!("{}x{} @ ({},{})", ctx.width, ctx.height, ctx.x, ctx.y);
                 draw_ctx.text_ttf(ctx.x + 20, ctx.y + 70, &info, Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY), TtfFont::inter(24));
                 draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADEBB3").unwrap_or(Color::GREEN), 1);*/
+                log::warn!("Widget {} not found", self.module);
                 return Ok(());
             }
         };
@@ -244,6 +245,9 @@ impl WidgetPlugin {
                 }
                 DrawCommand::FillRoundedRect { x, y, w, h, radius, color } => {
                     draw_ctx.fill_rounded_rect(x, y, w, h, radius, color);
+                }
+                DrawCommand::StrokeRoundedRect { x, y, w, h, radius, color, thickness } => {
+                    draw_ctx.stroke_rounded_rect(x, y, w, h, radius, color, thickness);
                 }
                 DrawCommand::FillCircle { cx, cy, radius, color } => {
                     draw_ctx.fill_circle(cx, cy, radius, color);

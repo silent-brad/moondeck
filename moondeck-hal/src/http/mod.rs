@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 use esp_idf_svc::http::client::{Configuration as HttpConfig, EspHttpConnection};
-use esp_idf_svc::io::Write;
+use esp_idf_svc::io::{Write};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -24,15 +24,20 @@ impl HttpClient {
         Self { timeout_ms }
     }
 
+    fn create_config(&self) -> HttpConfig {
+        HttpConfig {
+            timeout: Some(std::time::Duration::from_millis(self.timeout_ms as u64)),
+            crt_bundle_attach: Some(esp_idf_svc::sys::esp_crt_bundle_attach),
+            ..Default::default()
+        }
+    }
+
     pub fn get(&self, url: &str) -> Result<HttpResponse> {
         self.get_with_headers(url, &[])
     }
 
     pub fn get_with_headers(&self, url: &str, headers: &[(&str, &str)]) -> Result<HttpResponse> {
-        let config = HttpConfig {
-            timeout: Some(std::time::Duration::from_millis(self.timeout_ms as u64)),
-            ..Default::default()
-        };
+        let config = self.create_config();
 
         let mut client = EspHttpConnection::new(&config)
             .context("Failed to create HTTP connection")?;
@@ -68,10 +73,7 @@ impl HttpClient {
     }
 
     pub fn post(&self, url: &str, body: &str, content_type: &str) -> Result<HttpResponse> {
-        let config = HttpConfig {
-            timeout: Some(std::time::Duration::from_millis(self.timeout_ms as u64)),
-            ..Default::default()
-        };
+        let config = self.create_config();
 
         let mut client = EspHttpConnection::new(&config)
             .context("Failed to create HTTP connection")?;

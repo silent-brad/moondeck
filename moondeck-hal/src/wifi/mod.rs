@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
+use esp_idf_svc::wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi};
 use esp_idf_hal::modem::Modem;
 use std::net::Ipv4Addr;
 
@@ -38,9 +38,18 @@ impl<'d> WifiManager<'d> {
     pub fn connect(&mut self, ssid: &str, password: &str) -> Result<()> {
         self.ssid = ssid.to_string();
 
+        // Use WPA2WPA3Personal for modern routers, with fallback behavior
+        // AuthMethod::None would auto-detect but some routers require explicit auth
+        let auth_method = if password.is_empty() {
+            AuthMethod::None
+        } else {
+            AuthMethod::WPA2WPA3Personal
+        };
+
         let config = Configuration::Client(ClientConfiguration {
             ssid: ssid.try_into().map_err(|_| anyhow::anyhow!("SSID too long"))?,
             password: password.try_into().map_err(|_| anyhow::anyhow!("Password too long"))?,
+            auth_method,
             ..Default::default()
         });
 
@@ -50,7 +59,7 @@ impl<'d> WifiManager<'d> {
         self.wifi.start()
             .context("Failed to start WiFi")?;
 
-        log::info!("WiFi started, connecting to '{}'...", ssid);
+        log::info!("WiFi started, connecting to '{}' with auth {:?}...", ssid, auth_method);
 
         self.wifi.connect()
             .context("Failed to connect to WiFi")?;

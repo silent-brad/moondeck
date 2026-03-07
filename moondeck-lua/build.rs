@@ -64,7 +64,7 @@ fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
 
     // Generate ThemeColors struct
     code.push_str(r#"#[derive(Debug, Clone)]
-struct ThemeColors {
+pub struct ThemeColors {
     bg_primary: &'static str,
     bg_secondary: &'static str,
     bg_tertiary: &'static str,

@@ -9,6 +9,7 @@ pub enum DrawCommand {
     FillRect { x: i32, y: i32, w: u32, h: u32, color: Color },
     StrokeRect { x: i32, y: i32, w: u32, h: u32, color: Color, thickness: u32 },
     FillRoundedRect { x: i32, y: i32, w: u32, h: u32, radius: u32, color: Color },
+    StrokeRoundedRect { x: i32, y: i32, w: u32, h: u32, radius: u32, color: Color, thickness: u32 },
     FillCircle { cx: i32, cy: i32, radius: u32, color: Color },
     StrokeCircle { cx: i32, cy: i32, radius: u32, color: Color, thickness: u32 },
     Line { x1: i32, y1: i32, x2: i32, y2: i32, color: Color, thickness: u32 },
@@ -225,7 +226,7 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             }),
         )?;
 
-        // gfx:circle(cx, cy, radius, color)
+        // gfx:circle(cx, cy, radius, color) - alias for fill_circle
         gfx_table.set(
             ctx,
             "circle",
@@ -239,6 +240,73 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
                         cy: cy as i32 + oy,
                         radius: radius as u32,
                         color: color_from_value(color),
+                    })
+                });
+                stack.replace(ctx, Value::Nil);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
+        // gfx:fill_circle(cx, cy, radius, color)
+        gfx_table.set(
+            ctx,
+            "fill_circle",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (_self, cx, cy, radius, color): (Value, i64, i64, i64, Value) =
+                    stack.consume(ctx)?;
+                let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
+                DRAW_COMMANDS.with(|dc| {
+                    dc.push(DrawCommand::FillCircle {
+                        cx: cx as i32 + ox,
+                        cy: cy as i32 + oy,
+                        radius: radius as u32,
+                        color: color_from_value(color),
+                    })
+                });
+                stack.replace(ctx, Value::Nil);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
+        // gfx:stroke_circle(cx, cy, radius, color, thickness)
+        gfx_table.set(
+            ctx,
+            "stroke_circle",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (_self, cx, cy, radius, color, thickness): (Value, i64, i64, i64, Value, i64) =
+                    stack.consume(ctx)?;
+                let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
+                DRAW_COMMANDS.with(|dc| {
+                    dc.push(DrawCommand::StrokeCircle {
+                        cx: cx as i32 + ox,
+                        cy: cy as i32 + oy,
+                        radius: radius as u32,
+                        color: color_from_value(color),
+                        thickness: thickness as u32,
+                    })
+                });
+                stack.replace(ctx, Value::Nil);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
+        // gfx:stroke_rounded_rect(x, y, w, h, radius, color, thickness)
+        gfx_table.set(
+            ctx,
+            "stroke_rounded_rect",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (_self, x, y, w, h, radius, color, thickness): (Value, i64, i64, i64, i64, i64, Value, i64) =
+                    stack.consume(ctx)?;
+                let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
+                DRAW_COMMANDS.with(|dc| {
+                    dc.push(DrawCommand::StrokeRoundedRect {
+                        x: x as i32 + ox,
+                        y: y as i32 + oy,
+                        w: w as u32,
+                        h: h as u32,
+                        radius: radius as u32,
+                        color: color_from_value(color),
+                        thickness: thickness as u32,
                     })
                 });
                 stack.replace(ctx, Value::Nil);
