@@ -33,10 +33,7 @@ function M.render(state, gfx)
 	local hours = math.floor(now / 3600) % 24
 
 	-- Draw card background
-	components.card(gfx, 0, 0, state.width, state.height, {
-		bg = th.bg_card,
-		border = th.border_primary,
-	})
+	components.card(gfx, 0, 0, state.width, state.height)
 
 	-- Padding
 	local px, py = 20, 15

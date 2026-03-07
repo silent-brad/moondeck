@@ -6,8 +6,6 @@ pub struct Page {
     pub id: String,
     pub title: String,
     pub widgets: Vec<WidgetInstance>,
-    #[serde(default)]
-    pub background_color: Option<String>,
 }
 
 impl Page {
@@ -16,17 +14,11 @@ impl Page {
             id: id.to_string(),
             title: title.to_string(),
             widgets: Vec::new(),
-            background_color: None,
         }
     }
 
     pub fn with_widget(mut self, widget: WidgetInstance) -> Self {
         self.widgets.push(widget);
-        self
-    }
-
-    pub fn with_background(mut self, color: &str) -> Self {
-        self.background_color = Some(color.to_string());
         self
     }
 }

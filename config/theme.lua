@@ -159,7 +159,7 @@ return {
 	screen = screen,
 
 	-- Current active theme (can be changed)
-	current = "dark",
+	current = "light",
 
 	-- Helper to get current theme
 	get = function(self)

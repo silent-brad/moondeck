@@ -15,7 +15,7 @@ pub use env::register_env;
 pub use gfx::{get_draw_commands, get_draw_offset, register_gfx, set_draw_offset, DrawCommand, LuaDrawCommands};
 #[allow(unused_imports)]
 pub use net::register_net;
-pub use modules::register_modules;
+pub use modules::{get_current_theme, get_theme_bg_primary, register_modules};
 
 pub fn register_all(lua: &mut Lua, env_config: &EnvConfig) -> Result<()> {
     register_gfx(lua)?;

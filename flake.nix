@@ -100,13 +100,17 @@
               source "$EXPORT_FILE"
             fi
 
-            echo ""
-            echo "🌙 Moondeck ESP32-S3 Development Environment (FHS)"
-            echo ""
-            echo "  Build & flash:"
-            echo "    cargo build --release -p moondeck-app"
-            echo "    espflash flash target/xtensa-esp32s3-espidf/release/moondeck --partition-table target/xtensa-esp32s3-espidf/release/partition-table.bin --monitor"
-            echo ""
+            # Only show welcome message once
+            if [ -z "$MOONDECK_ENV_LOADED" ]; then
+              export MOONDECK_ENV_LOADED=1
+              echo ""
+              echo "🌙 Moondeck ESP32-S3 Development Environment (FHS)"
+              echo ""
+              echo "  Build & flash:"
+              echo "    cargo build --release -p moondeck-app"
+              echo "    espflash flash target/xtensa-esp32s3-espidf/release/moondeck --partition-table target/xtensa-esp32s3-espidf/release/partition-table.bin --monitor"
+              echo ""
+            fi
           '';
 
           runScript = "bash";

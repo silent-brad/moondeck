@@ -8,14 +8,17 @@ theme = require("theme")
 layout = require("layout")
 components = require("components")
 
--- Set theme from environment
-local theme_name = env.get("THEME") or "dark"
-if theme:set(theme_name) then
-	print("Theme: " .. theme_name)
-else
-	print("Theme not found, using dark")
-	theme:set("dark")
+-- Set theme from environment (or use default from theme.lua)
+local theme_name = env.get("THEME")
+if theme_name then
+	if theme:set(theme_name) then
+		print("Theme: " .. theme_name)
+	else
+		print("Theme '" .. theme_name .. "' not found, using default")
+	end
 end
+-- Theme is already initialized to default from config/theme.lua
+print("Active theme: " .. (theme:get().name or "unknown"))
 
 -- Global configuration
 config = {

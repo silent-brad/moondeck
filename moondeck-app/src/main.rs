@@ -129,8 +129,14 @@ fn main() -> Result<()> {
 
     info!("Initialized {} widget(s)", plugins.len());
 
+    // Get theme background color from Lua config
+    let theme_name = lua_runtime.get_current_theme();
+    let theme_bg_hex = lua_runtime.get_theme_background();
+    let theme_bg = Color::from_hex(&theme_bg_hex).unwrap_or(Color::BLACK);
+    info!("Theme: {}, background: {}", theme_name, theme_bg_hex);
+
     info!("Starting main loop...");
-    run_main_loop(&mut lua_runtime, &mut page_manager, &mut plugins, &mut display, &mut touch_controller)?;
+    run_main_loop(&mut lua_runtime, &mut page_manager, &mut plugins, &mut display, &mut touch_controller, theme_bg)?;
 
     Ok(())
 }
@@ -141,6 +147,7 @@ fn run_main_loop(
     plugins: &mut [(WidgetPlugin, WidgetInstance)],
     display: &mut Display,
     touch_controller: &mut TouchController,
+    bg_color: Color,
 ) -> Result<()> {
     let mut framebuffer = Framebuffer::new();
     let mut frame_timer = FrameTimer::new();
@@ -172,12 +179,6 @@ fn run_main_loop(
         for (plugin, _widget) in plugins.iter() {
             let _ = plugin.update(lua_runtime, delta_ms);
         }
-
-        let bg_color = page_manager
-            .current_page()
-            .and_then(|p| p.background_color.as_ref())
-            .and_then(|c| Color::from_hex(c))
-            .unwrap_or(Color::GRAY);
 
         {
             let mut draw_ctx = DrawContext::new(&mut framebuffer);

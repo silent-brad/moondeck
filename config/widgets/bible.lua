@@ -102,10 +102,7 @@ function M.render(state, gfx)
 	local px, py = 20, 15
 
 	-- Draw card
-	components.card(gfx, 0, 0, state.width, state.height, {
-		bg = th.bg_card,
-		border = th.border_primary,
-	})
+	components.card(gfx, 0, 0, state.width, state.height)
 
 	-- Decorative cross icon (simple)
 	gfx:line(px + 5, py + 5, px + 5, py + 20, th.accent_primary, 2)

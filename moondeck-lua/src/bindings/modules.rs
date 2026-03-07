@@ -1,44 +1,73 @@
 use anyhow::Result;
 use moondeck_core::gfx::Color;
 use piccolo::{Callback, CallbackReturn, Lua, String as LuaString, Table, Value};
-use std::sync::{Arc, Mutex};
+use std::sync::RwLock;
 
 use crate::bindings::gfx::{get_draw_commands, get_draw_offset};
 
+// Auto-generated theme definitions from config/theme.lua
+include!(concat!(env!("OUT_DIR"), "/embedded_themes.rs"));
+
+// Global current theme state (accessible from Rust)
+static CURRENT_THEME: RwLock<String> = RwLock::new(String::new());
+
+/// Get the current theme name
+pub fn get_current_theme() -> String {
+    CURRENT_THEME.read().unwrap().clone()
+}
+
+/// Get the current theme's background color
+pub fn get_theme_bg_primary() -> &'static str {
+    let theme_name = CURRENT_THEME.read().unwrap();
+    let theme = get_theme(&theme_name);
+    theme.bg_primary
+}
+
+/// Get available theme names
+#[allow(dead_code)]
+pub fn get_theme_names() -> &'static [&'static str] {
+    THEME_NAMES
+}
+
 fn create_theme_colors_table<'gc>(ctx: piccolo::Context<'gc>, theme_name: &str) -> Table<'gc> {
     let colors = Table::new(&ctx);
+    let theme = get_theme(theme_name);
 
-    let (bg_card, bg_surface, border_primary, text_primary, text_muted, text_accent, accent_primary, accent_success, accent_error, accent_warning) = match theme_name {
-        "light" => (
-            "#f5f5f5", "#ffffff", "#e0e0e0",
-            "#1a1a1a", "#666666", "#0066cc",
-            "#0066cc", "#28a745", "#dc3545", "#ffc107",
-        ),
-        _ => (
-            "#1a1a2e", "#16213e", "#3a3a5e",
-            "#ffffff", "#a0a0a0", "#00d4ff",
-            "#00d4ff", "#00ff88", "#ff4466", "#ffaa00",
-        ),
-    };
-
-    let _ = colors.set(ctx, "bg_card", ctx.intern(bg_card.as_bytes()));
-    let _ = colors.set(ctx, "bg_surface", ctx.intern(bg_surface.as_bytes()));
-    let _ = colors.set(ctx, "border_primary", ctx.intern(border_primary.as_bytes()));
-    let _ = colors.set(ctx, "text_primary", ctx.intern(text_primary.as_bytes()));
-    let _ = colors.set(ctx, "text_muted", ctx.intern(text_muted.as_bytes()));
-    let _ = colors.set(ctx, "text_accent", ctx.intern(text_accent.as_bytes()));
-    let _ = colors.set(ctx, "accent_primary", ctx.intern(accent_primary.as_bytes()));
-    let _ = colors.set(ctx, "accent_success", ctx.intern(accent_success.as_bytes()));
-    let _ = colors.set(ctx, "accent_error", ctx.intern(accent_error.as_bytes()));
-    let _ = colors.set(ctx, "accent_warning", ctx.intern(accent_warning.as_bytes()));
+    let _ = colors.set(ctx, "name", ctx.intern(theme_name.as_bytes()));
+    // Background colors
+    let _ = colors.set(ctx, "bg_primary", ctx.intern(theme.bg_primary.as_bytes()));
+    let _ = colors.set(ctx, "bg_secondary", ctx.intern(theme.bg_secondary.as_bytes()));
+    let _ = colors.set(ctx, "bg_tertiary", ctx.intern(theme.bg_tertiary.as_bytes()));
+    let _ = colors.set(ctx, "bg_card", ctx.intern(theme.bg_card.as_bytes()));
+    // Text colors
+    let _ = colors.set(ctx, "text_primary", ctx.intern(theme.text_primary.as_bytes()));
+    let _ = colors.set(ctx, "text_secondary", ctx.intern(theme.text_secondary.as_bytes()));
+    let _ = colors.set(ctx, "text_muted", ctx.intern(theme.text_muted.as_bytes()));
+    let _ = colors.set(ctx, "text_accent", ctx.intern(theme.text_accent.as_bytes()));
+    // Accent colors
+    let _ = colors.set(ctx, "accent_primary", ctx.intern(theme.accent_primary.as_bytes()));
+    let _ = colors.set(ctx, "accent_secondary", ctx.intern(theme.accent_secondary.as_bytes()));
+    let _ = colors.set(ctx, "accent_success", ctx.intern(theme.accent_success.as_bytes()));
+    let _ = colors.set(ctx, "accent_warning", ctx.intern(theme.accent_warning.as_bytes()));
+    let _ = colors.set(ctx, "accent_error", ctx.intern(theme.accent_error.as_bytes()));
+    // Border colors
+    let _ = colors.set(ctx, "border_primary", ctx.intern(theme.border_primary.as_bytes()));
+    let _ = colors.set(ctx, "border_accent", ctx.intern(theme.border_accent.as_bytes()));
+    // Component specific
+    let _ = colors.set(ctx, "card_radius", theme.card_radius);
+    let _ = colors.set(ctx, "border_width", theme.border_width);
 
     colors
 }
 
 pub fn register_modules(lua: &mut Lua) -> Result<()> {
-    let current_theme = Arc::new(Mutex::new("dark".to_string()));
-    let current_theme_get = current_theme.clone();
-    let current_theme_set = current_theme;
+    // Initialize global theme state with default from config/theme.lua
+    {
+        let mut theme = CURRENT_THEME.write().unwrap();
+        if theme.is_empty() {
+            *theme = DEFAULT_THEME.to_string();
+        }
+    }
 
     lua.try_enter(|ctx| {
         // Create theme module
@@ -47,10 +76,11 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
         theme_table.set(
             ctx,
             "set",
-            Callback::from_fn(&ctx, move |ctx, _exec, mut stack| {
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
                 let (_self_table, theme_name): (Value, LuaString) = stack.consume(ctx)?;
                 let theme_str = theme_name.to_str().unwrap_or("dark").to_string();
-                *current_theme_set.lock().unwrap() = theme_str;
+                // Update global theme state
+                *CURRENT_THEME.write().unwrap() = theme_str;
                 stack.replace(ctx, true);
                 Ok(CallbackReturn::Return)
             }),
@@ -59,8 +89,8 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
         theme_table.set(
             ctx,
             "get",
-            Callback::from_fn(&ctx, move |ctx, _exec, mut stack| {
-                let theme = current_theme_get.lock().unwrap().clone();
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let theme = CURRENT_THEME.read().unwrap().clone();
                 let colors = create_theme_colors_table(ctx, &theme);
                 stack.replace(ctx, colors);
                 Ok(CallbackReturn::Return)
@@ -105,17 +135,20 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 let abs_x = offset_x + x as u32;
                 let abs_y = offset_y + y as u32;
 
-                let mut bg_color = Color::from_hex("#1a1a2e").unwrap_or(Color::BLACK);
-                let mut border_color = Color::from_hex("#3a3a5e").unwrap_or(Color::GRAY);
+                // Get current theme colors as defaults
+                let theme_name = CURRENT_THEME.read().unwrap();
+                let theme = get_theme(&theme_name);
+                let mut bg_color = Color::from_hex(theme.bg_card).unwrap_or(Color::BLACK);
+                let mut border_color = Color::from_hex(theme.border_primary).unwrap_or(Color::GRAY);
 
                 if let Value::Table(opts_table) = opts {
                     if let Value::String(bg) = opts_table.get(ctx, "bg") {
-                        if let Some(c) = Color::from_hex(bg.to_str().unwrap_or("#1a1a2e")) {
+                        if let Some(c) = Color::from_hex(bg.to_str().unwrap_or(theme.bg_card)) {
                             bg_color = c;
                         }
                     }
                     if let Value::String(border) = opts_table.get(ctx, "border") {
-                        if let Some(c) = Color::from_hex(border.to_str().unwrap_or("#3a3a5e")) {
+                        if let Some(c) = Color::from_hex(border.to_str().unwrap_or(theme.border_primary)) {
                             border_color = c;
                         }
                     }
@@ -141,11 +174,15 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 let abs_x = (offset_x as i64 + x) as i32;
                 let abs_y = (offset_y as i64 + y) as i32;
 
-                let mut accent_color = Color::from_hex("#00d4ff").unwrap_or(Color::CYAN);
+                // Get current theme colors as defaults
+                let theme_name = CURRENT_THEME.read().unwrap();
+                let theme = get_theme(&theme_name);
+                let mut accent_color = Color::from_hex(theme.accent_primary).unwrap_or(Color::CYAN);
+                let text_color = Color::from_hex(theme.text_primary).unwrap_or(Color::WHITE);
 
                 if let Value::Table(opts_table) = opts {
                     if let Value::String(accent) = opts_table.get(ctx, "accent") {
-                        if let Some(c) = Color::from_hex(accent.to_str().unwrap_or("#00d4ff")) {
+                        if let Some(c) = Color::from_hex(accent.to_str().unwrap_or(theme.accent_primary)) {
                             accent_color = c;
                         }
                     }
@@ -153,7 +190,7 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
 
                 let draw_cmds = get_draw_commands();
                 let title_str = title.to_str().unwrap_or("Widget");
-                draw_cmds.text(abs_x, abs_y, title_str, Color::WHITE, moondeck_core::gfx::Font::Large);
+                draw_cmds.text(abs_x, abs_y, title_str, text_color, moondeck_core::gfx::Font::Large);
                 draw_cmds.line(abs_x, abs_y + 22, abs_x + 60, abs_y + 22, accent_color, 2);
 
                 stack.replace(ctx, 30i64);
@@ -172,8 +209,13 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 let abs_x = (offset_x as i64 + x) as i32;
                 let abs_y = (offset_y as i64 + y) as i32;
 
+                // Get current theme colors
+                let theme_name = CURRENT_THEME.read().unwrap();
+                let theme = get_theme(&theme_name);
+                let text_color = Color::from_hex(theme.text_muted).unwrap_or(Color::GRAY);
+
                 let draw_cmds = get_draw_commands();
-                draw_cmds.text(abs_x, abs_y, "Loading...", Color::from_hex("#a0a0a0").unwrap_or(Color::GRAY), moondeck_core::gfx::Font::Medium);
+                draw_cmds.text(abs_x, abs_y, "Loading...", text_color, moondeck_core::gfx::Font::Medium);
 
                 stack.replace(ctx, Value::Nil);
                 Ok(CallbackReturn::Return)
@@ -191,9 +233,14 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 let abs_x = (offset_x as i64 + x) as i32;
                 let abs_y = (offset_y as i64 + y) as i32;
 
+                // Get current theme colors
+                let theme_name = CURRENT_THEME.read().unwrap();
+                let theme = get_theme(&theme_name);
+                let error_color = Color::from_hex(theme.accent_error).unwrap_or(Color::RED);
+
                 let draw_cmds = get_draw_commands();
                 let msg = message.to_str().unwrap_or("Error");
-                draw_cmds.text(abs_x, abs_y, msg, Color::from_hex("#ff4466").unwrap_or(Color::RED), moondeck_core::gfx::Font::Medium);
+                draw_cmds.text(abs_x, abs_y, msg, error_color, moondeck_core::gfx::Font::Medium);
 
                 stack.replace(ctx, Value::Nil);
                 Ok(CallbackReturn::Return)
@@ -211,12 +258,18 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 let abs_x = (offset_x as i64 + x) as i32;
                 let abs_y = (offset_y as i64 + y) as i32;
 
+                // Get current theme colors
+                let theme_name = CURRENT_THEME.read().unwrap();
+                let theme = get_theme(&theme_name);
+                let label_color = Color::from_hex(theme.text_secondary).unwrap_or(Color::GRAY);
+                let value_color = Color::from_hex(theme.text_primary).unwrap_or(Color::WHITE);
+
                 let draw_cmds = get_draw_commands();
                 let label_str = label.to_str().unwrap_or("");
                 let value_str = value.to_str().unwrap_or("");
 
-                draw_cmds.text(abs_x, abs_y, label_str, Color::from_hex("#a0a0a0").unwrap_or(Color::GRAY), moondeck_core::gfx::Font::Small);
-                draw_cmds.text(abs_x + 80, abs_y, value_str, Color::WHITE, moondeck_core::gfx::Font::Small);
+                draw_cmds.text(abs_x, abs_y, label_str, label_color, moondeck_core::gfx::Font::Small);
+                draw_cmds.text(abs_x + 80, abs_y, value_str, value_color, moondeck_core::gfx::Font::Small);
 
                 stack.replace(ctx, Value::Nil);
                 Ok(CallbackReturn::Return)

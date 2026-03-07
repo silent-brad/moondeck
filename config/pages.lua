@@ -17,7 +17,6 @@ return {
 		{
 			id = "dashboard",
 			title = "Dashboard",
-			background = "#0a0a0f",
 			layout = "main_sidebar",
 			widgets = {
 				-- Main area: Clock
@@ -52,7 +51,6 @@ return {
 		{
 			id = "finance",
 			title = "Finance",
-			background = "#0a0a0f",
 			layout = "half_half",
 			widgets = {
 				-- Left: Stocks
@@ -76,7 +74,6 @@ return {
 		{
 			id = "reading",
 			title = "Reading",
-			background = "#0a0a0f",
 			layout = "half_half",
 			widgets = {
 				-- Left: Bible Verse
@@ -100,7 +97,6 @@ return {
 		{
 			id = "inspiration",
 			title = "Inspiration",
-			background = "#0a0a0f",
 			layout = "full",
 			widgets = {
 				{
@@ -118,7 +114,6 @@ return {
 		{
 			id = "system",
 			title = "System",
-			background = "#0a0a0f",
 			layout = "full",
 			widgets = {
 				{

@@ -124,10 +124,7 @@ function M.render(state, gfx)
 	local px, py = 20, 15
 
 	-- Draw card
-	components.card(gfx, 0, 0, state.width, state.height, {
-		bg = th.bg_card,
-		border = th.border_primary,
-	})
+	components.card(gfx, 0, 0, state.width, state.height)
 
 	-- Title bar with entry count
 	local title = "RSS Feed"

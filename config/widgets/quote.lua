@@ -141,10 +141,7 @@ function M.render(state, gfx)
 	local px, py = 25, 20
 
 	-- Draw card
-	components.card(gfx, 0, 0, state.width, state.height, {
-		bg = th.bg_card,
-		border = th.border_primary,
-	})
+	components.card(gfx, 0, 0, state.width, state.height)
 
 	if state.loading then
 		components.loading(gfx, px, state.height / 2 - 10)

@@ -3,22 +3,13 @@ use crate::LuaRuntime;
 use anyhow::{Context, Result};
 use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::DrawTarget;
-use moondeck_core::gfx::{Color, DrawContext};
+use moondeck_core::gfx::{DrawContext};
 use moondeck_core::ui::{Event, Gesture, WidgetContext};
 use moondeck_core::TtfFont;
 use piccolo::{Closure, Executor, Fuel, StashedTable, Table, Value};
 
-const EMBEDDED_WIDGETS: &[(&str, &str)] = &[
-    ("widgets.clock", include_str!("../../config/widgets/clock.lua")),
-    ("widgets.weather", include_str!("../../config/widgets/weather.lua")),
-    ("widgets.crypto", include_str!("../../config/widgets/crypto.lua")),
-    ("widgets.stocks", include_str!("../../config/widgets/stocks.lua")),
-    ("widgets.bible", include_str!("../../config/widgets/bible.lua")),
-    ("widgets.rss", include_str!("../../config/widgets/rss.lua")),
-    ("widgets.quote", include_str!("../../config/widgets/quote.lua")),
-    ("widgets.sysinfo", include_str!("../../config/widgets/sysinfo.lua")),
-    ("widgets.status", include_str!("../../config/widgets/status.lua")),
-];
+// Auto-generated from config/widgets/*.lua by build.rs
+include!(concat!(env!("OUT_DIR"), "/embedded_widgets.rs"));
 
 pub struct WidgetPlugin {
     pub module: String,
@@ -191,12 +182,13 @@ impl WidgetPlugin {
         let module_table = match &self.module_table {
             Some(m) => m,
             None => {
-                draw_ctx.fill_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#58855C").unwrap_or(Color::GREEN));
+                // TODO: Remove this:
+                /*draw_ctx.fill_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#58855C").unwrap_or(Color::GREEN));
                 let title = format!("Widget: {}", self.module);
                 draw_ctx.text_ttf(ctx.x + 20, ctx.y + 40, &title, Color::WHITE, TtfFont::garamond_italic(38));
                 let info = format!("{}x{} @ ({},{})", ctx.width, ctx.height, ctx.x, ctx.y);
                 draw_ctx.text_ttf(ctx.x + 20, ctx.y + 70, &info, Color::from_hex("#9EB8A0").unwrap_or(Color::GRAY), TtfFont::inter(24));
-                draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADEBB3").unwrap_or(Color::GREEN), 1);
+                draw_ctx.stroke_rect(ctx.x, ctx.y, ctx.width, ctx.height, Color::from_hex("#ADEBB3").unwrap_or(Color::GREEN), 1);*/
                 return Ok(());
             }
         };

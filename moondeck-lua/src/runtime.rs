@@ -86,6 +86,16 @@ impl LuaRuntime {
     pub fn lua(&mut self) -> &mut Lua {
         &mut self.lua
     }
+
+    /// Get the current theme's background color (bg_primary)
+    pub fn get_theme_background(&self) -> String {
+        bindings::get_theme_bg_primary().to_string()
+    }
+
+    /// Get the current theme name
+    pub fn get_current_theme(&self) -> String {
+        bindings::get_current_theme()
+    }
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -97,7 +107,6 @@ struct PagesConfig {
 struct PageConfig {
     id: String,
     title: Option<String>,
-    background: Option<String>,
     layout: Option<String>,
     #[serde(default)]
     widgets: Vec<WidgetConfig>,
@@ -176,16 +185,16 @@ fn get_layout_slots(layout_name: &str) -> Vec<LayoutSlot> {
 fn calculate_slot_bounds(slot: &LayoutSlot, rows: i32) -> (i32, i32, u32, u32) {
     let available_width = SCREEN_WIDTH - (GRID_MARGIN * 2) - (GRID_GUTTER * (GRID_COLS - 1));
     let single_col = available_width / GRID_COLS;
-    
+
     let x = GRID_MARGIN + ((slot.col - 1) * (single_col + GRID_GUTTER));
     let w = (single_col * slot.span) + (GRID_GUTTER * (slot.span - 1));
-    
+
     let available_height = SCREEN_HEIGHT - (GRID_MARGIN * 2) - (GRID_GUTTER * (rows - 1));
     let row_height = available_height / rows;
-    
+
     let y = GRID_MARGIN + ((slot.row - 1) * (row_height + GRID_GUTTER));
     let h = (row_height * slot.row_span) + (GRID_GUTTER * (slot.row_span - 1));
-    
+
     (x, y, w as u32, h as u32)
 }
 
@@ -229,9 +238,6 @@ fn parse_pages_config(lua_source: &str) -> Result<Vec<Page>> {
 
     let pages = config.pages.into_iter().map(|p| {
         let mut page = Page::new(&p.id, p.title.as_deref().unwrap_or(&p.id));
-        if let Some(bg) = p.background {
-            page = page.with_background(&bg);
-        }
         
         // Get layout slots if layout is specified
         let layout_slots = p.layout.as_deref().map(get_layout_slots);
@@ -314,7 +320,6 @@ fn value_to_json<'gc>(ctx: piccolo::Context<'gc>, value: Value<'gc>) -> serde_js
 fn create_demo_pages() -> Vec<Page> {
     vec![
         Page::new("home", "Home")
-            .with_background("#0D3311")
             .with_widget(
                 WidgetInstance::new("clock", 20, 20, 360, 180)
                     .with_update_interval(1000),
@@ -328,7 +333,6 @@ fn create_demo_pages() -> Vec<Page> {
                     .with_update_interval(1000),
             ),
         Page::new("info", "System Info")
-            .with_background("#0D3311")
             .with_widget(
                 WidgetInstance::new("sysinfo", 20, 20, 760, 420)
                     .with_update_interval(2000),

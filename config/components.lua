@@ -10,23 +10,20 @@ local function t()
 	return theme:get()
 end
 
--- Card component: rounded rectangle with optional border
-function Components.card(gfx, x, y, w, h, opts)
-	opts = opts or {}
+-- Card component: rounded rectangle with border (uses theme defaults)
+function Components.card(gfx, x, y, w, h)
 	local th = t()
 
-	local bg = opts.bg or th.bg_card
-	local radius = opts.radius or th.card_radius
-	local border = opts.border or nil
-	local border_width = opts.border_width or th.border_width
+	local bg = th.bg_card
+	local radius = th.card_radius
+	local border = th.border_primary
+	local border_width = th.border_width
 
 	-- Draw background
 	gfx:fill_rounded_rect(x, y, w, h, radius, bg)
 
-	-- Draw border if specified
-	if border then
-		gfx:stroke_rounded_rect(x, y, w, h, radius, border, border_width)
-	end
+	-- Draw border
+	gfx:stroke_rounded_rect(x, y, w, h, radius, border, border_width)
 end
 
 -- Title bar component
