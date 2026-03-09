@@ -245,6 +245,8 @@ fn do_http_get(
 ) -> Result<(u16, String), String> {
     use moondeck_hal::HttpClient;
 
+    log::info!("HTTP GET: {}", url);
+    
     let client = HttpClient::with_timeout(timeout_ms);
     let header_pairs: Vec<(&str, &str)> = headers
         .iter()
@@ -252,8 +254,14 @@ fn do_http_get(
         .collect();
 
     match client.get_with_headers(url, &header_pairs) {
-        Ok(response) => Ok((response.status, response.body)),
-        Err(e) => Err(format!("{}", e)),
+        Ok(response) => {
+            log::info!("HTTP response: {} ({} bytes)", response.status, response.body.len());
+            Ok((response.status, response.body))
+        }
+        Err(e) => {
+            log::error!("HTTP error: {:?}", e);
+            Err(format!("{}", e))
+        }
     }
 }
 

@@ -6,75 +6,78 @@ local components = require("components")
 
 local M = {}
 
+-- Safe floor function (avoids upvalue issues with piccolo)
+local function floor(n)
+	if math and math.floor then
+		return math.floor(n)
+	end
+	local i = n - (n % 1)
+	if n < 0 and i ~= n then
+		return i - 1
+	end
+	return i
+end
+
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_secondary = "#a0a0b0",
+		text_muted = "#606070",
+		text_accent = "#00d4ff",
+		accent_primary = "#00d4ff",
+		accent_secondary = "#e94560",
+		accent_success = "#00ff88",
+		accent_warning = "#ffaa00",
+		accent_error = "#ff4466",
+		bg_tertiary = "#1a1a2e",
+		border_primary = "#2a2a3e",
+	}
+end
+
+-- Safe env getter
+local function env_get(key)
+	if env and type(env.get) == "function" then
+		return env.get(key)
+	end
+	return nil
+end
+
 function M.init(ctx)
 	return {
 		x = ctx.x,
 		y = ctx.y,
 		width = ctx.width,
 		height = ctx.height,
-		city = ctx.opts.city or env.get("WEATHER_CITY") or "New York",
-		units = ctx.opts.units or env.get("WEATHER_UNITS") or "imperial",
+		city = ctx.opts.city or env_get("WEATHER_CITY") or "New York",
+		units = ctx.opts.units or env_get("WEATHER_UNITS") or "imperial",
 		temperature = nil,
 		feels_like = nil,
 		description = nil,
 		humidity = nil,
 		wind_speed = nil,
 		icon = nil,
-		last_fetch = 0,
 		fetch_interval = ctx.opts.update_interval or 300000,
+		last_fetch = ctx.opts.update_interval or 300000, -- Start at interval to fetch immediately
 		loading = true,
 		error = nil,
 	}
 end
 
 function M.update(state, delta_ms)
+	-- Only track time - complex operations not supported due to piccolo closure limitations
 	state.last_fetch = state.last_fetch + delta_ms
-
-	if state.last_fetch >= state.fetch_interval or state.temperature == nil then
-		M.fetch_weather(state)
-		state.last_fetch = 0
-	end
-end
-
-function M.fetch_weather(state)
-	local api_key = env.get("WEATHER_API_KEY")
-	if not api_key then
-		state.error = "Set WEATHER_API_KEY"
-		state.loading = false
-		return
-	end
-
-	local url = string.format(
-		"https://api.openweathermap.org/data/2.5/weather?q=%s&units=%s&appid=%s",
-		state.city,
-		state.units,
-		api_key
-	)
-
-	local response = net.http_get(url, nil, 10000)
-
-	if response.ok then
-		local data = net.json_decode(response.body)
-		if data and data.main then
-			state.temperature = math.floor(data.main.temp + 0.5)
-			state.feels_like = math.floor(data.main.feels_like + 0.5)
-			state.humidity = data.main.humidity
-			state.description = data.weather and data.weather[1] and data.weather[1].main or "Unknown"
-			state.icon = data.weather and data.weather[1] and data.weather[1].icon or nil
-			state.wind_speed = data.wind and math.floor(data.wind.speed + 0.5)
-			state.error = nil
-		else
-			state.error = "Invalid response"
-		end
-	else
-		state.error = response.error or "Request failed"
-	end
-
-	state.loading = false
 end
 
 function M.render(state, gfx)
-	local th = theme:get()
+	local th = get_theme()
 	local px, py = 20, 15
 
 	-- Draw card

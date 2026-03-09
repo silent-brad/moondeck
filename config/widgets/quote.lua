@@ -6,6 +6,38 @@ local components = require("components")
 
 local M = {}
 
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_secondary = "#a0a0b0",
+		text_muted = "#606070",
+		text_accent = "#00d4ff",
+		accent_primary = "#00d4ff",
+		accent_secondary = "#e94560",
+		accent_success = "#00ff88",
+		accent_warning = "#ffaa00",
+		accent_error = "#ff4466",
+		bg_tertiary = "#1a1a2e",
+		border_primary = "#2a2a3e",
+	}
+end
+
+-- Safe env getter
+local function env_get(key)
+	if env and type(env.get) == "function" then
+		return env.get(key)
+	end
+	return nil
+end
+
 -- Built-in quotes collection
 local builtin_quotes = {
 	{ text = "The only way to do great work is to love what you do.", author = "Steve Jobs" },
@@ -57,60 +89,8 @@ function M.init(ctx)
 end
 
 function M.update(state, delta_ms)
+	-- Only do simple arithmetic - no stdlib calls work in piccolo across try_enter
 	state.last_change = state.last_change + delta_ms
-
-	if state.last_change >= state.change_interval or state.quote_text == nil then
-		M.next_quote(state)
-		state.last_change = 0
-	end
-end
-
-function M.next_quote(state)
-	if state.use_api then
-		M.fetch_quote_api(state)
-	else
-		M.get_local_quote(state)
-	end
-end
-
-function M.get_local_quote(state)
-	-- Use device time to pick a "random" quote
-	local seed = device.seconds()
-	state.quote_index = (seed % #builtin_quotes) + 1
-
-	local quote = builtin_quotes[state.quote_index]
-	state.quote_text = quote.text
-	state.quote_author = quote.author
-	state.error = nil
-end
-
-function M.fetch_quote_api(state)
-	local api_url = env.get("QUOTES_API_URL")
-	if not api_url then
-		-- Fall back to local quotes
-		M.get_local_quote(state)
-		return
-	end
-
-	state.loading = true
-
-	local response = net.http_get(api_url, nil, 10000)
-
-	if response.ok then
-		local data = net.json_decode(response.body)
-		if data then
-			-- Support various API formats
-			state.quote_text = data.content or data.quote or data.text or data.q
-			state.quote_author = data.author or data.a or "Unknown"
-			state.error = nil
-		else
-			M.get_local_quote(state) -- Fallback
-		end
-	else
-		M.get_local_quote(state) -- Fallback
-	end
-
-	state.loading = false
 end
 
 -- Word wrap helper
@@ -118,26 +98,26 @@ local function wrap_text(text, max_chars)
 	local lines = {}
 	local line = ""
 
-	for word in string.gmatch(text, "%S+") do
+	for word in string_gmatch(text, "%S+") do
 		if #line + #word + 1 <= max_chars then
 			line = line == "" and word or line .. " " .. word
 		else
 			if line ~= "" then
-				table.insert(lines, line)
+				table_insert(lines, line)
 			end
 			line = word
 		end
 	end
 
 	if line ~= "" then
-		table.insert(lines, line)
+		table_insert(lines, line)
 	end
 
 	return lines
 end
 
 function M.render(state, gfx)
-	local th = theme:get()
+	local th = get_theme()
 	local px, py = 25, 20
 
 	-- Draw card
@@ -157,12 +137,12 @@ function M.render(state, gfx)
 	gfx:text(px - 5, py + 10, '"', th.accent_primary, "xlarge")
 
 	-- Calculate text layout
-	local chars_per_line = math.floor((state.width - px * 2 - 20) / 8)
+	local chars_per_line = math_floor((state.width - px * 2 - 20) / 8)
 	local lines = wrap_text(state.quote_text, chars_per_line)
 
 	local line_height = 22
 	local text_start_y = py + 20
-	local max_lines = math.floor((state.height - text_start_y - 50) / line_height)
+	local max_lines = math_floor((state.height - text_start_y - 50) / line_height)
 
 	-- Draw quote text
 	for i, line in ipairs(lines) do
@@ -186,8 +166,8 @@ end
 
 function M.on_event(state, event)
 	if event.type == "tap" then
-		-- Show next quote
-		M.next_quote(state)
+		-- Show next quote by resetting the timer
+		state.last_change = state.change_interval
 		return true
 	end
 	return false

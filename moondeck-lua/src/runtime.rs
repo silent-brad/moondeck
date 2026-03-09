@@ -317,6 +317,7 @@ fn value_to_json<'gc>(ctx: piccolo::Context<'gc>, value: Value<'gc>) -> serde_js
     }
 }
 
+// TODO: Remove this function:
 fn create_demo_pages() -> Vec<Page> {
     vec![
         Page::new("home", "Home")

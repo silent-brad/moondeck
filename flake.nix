@@ -136,6 +136,28 @@
           "
         '';
 
+        # For flashing: nix run .#flash
+        packages.flash = pkgs.writeShellScriptBin "moondeck-flash" ''
+          exec ${fhs}/bin/moondeck-dev -c "
+            export PATH=\"\$HOME/.cargo/bin:\$PATH\"
+            if [ -f \"\$HOME/.espup/export-esp.sh\" ]; then
+              source \"\$HOME/.espup/export-esp.sh\"
+            fi
+            espflash flash target/xtensa-esp32s3-espidf/release/moondeck --partition-table target/xtensa-esp32s3-espidf/release/partition-table.bin
+          "
+        '';
+
+        # For flashing with monitor: nix run .#monitor
+        packages.monitor = pkgs.writeShellScriptBin "moondeck-monitor" ''
+          exec ${fhs}/bin/moondeck-dev -c "
+            export PATH=\"\$HOME/.cargo/bin:\$PATH\"
+            if [ -f \"\$HOME/.espup/export-esp.sh\" ]; then
+              source \"\$HOME/.espup/export-esp.sh\"
+            fi
+            espflash flash target/xtensa-esp32s3-espidf/release/moondeck --partition-table target/xtensa-esp32s3-espidf/release/partition-table.bin --monitor
+          "
+        '';
+
         # Export the FHS env itself
         packages.default = fhs;
       });

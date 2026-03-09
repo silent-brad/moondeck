@@ -5,43 +5,109 @@ local theme = require("theme")
 
 local Components = {}
 
--- Get current theme
+-- Safe math functions (avoids upvalue issues with piccolo)
+local function floor(n)
+	if math and math.floor then
+		return math.floor(n)
+	end
+	local i = n - (n % 1)
+	if n < 0 and i ~= n then
+		return i - 1
+	end
+	return i
+end
+
+local function max(a, b)
+	if math and math.max then
+		return math.max(a, b)
+	end
+	return a > b and a or b
+end
+
+local function min(a, b)
+	if math and math.min then
+		return math.min(a, b)
+	end
+	return a < b and a or b
+end
+
+-- Default theme colors fallback
+local default_colors = {
+	bg_primary = "#0a0a0f",
+	bg_secondary = "#12121a",
+	bg_tertiary = "#1a1a2e",
+	bg_card = "#16162a",
+	text_primary = "#ffffff",
+	text_secondary = "#a0a0b0",
+	text_muted = "#606070",
+	text_accent = "#00d4ff",
+	accent_primary = "#00d4ff",
+	accent_secondary = "#e94560",
+	accent_success = "#00ff88",
+	accent_warning = "#ffaa00",
+	accent_error = "#ff4466",
+	border_primary = "#2a2a3e",
+	border_accent = "#00d4ff",
+	card_radius = 12,
+	border_width = 1,
+}
+
+-- Get current theme with fallback
 local function t()
-	return theme:get()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	return default_colors
 end
 
 -- Card component: rounded rectangle with border (uses theme defaults)
 function Components.card(gfx, x, y, w, h)
+	if not gfx then
+		return
+	end
+
 	local th = t()
 
-	local bg = th.bg_card
-	local radius = th.card_radius
-	local border = th.border_primary
-	local border_width = th.border_width
+	local bg = th.bg_card or "#16162a"
+	local radius = th.card_radius or 12
+	local border = th.border_primary or "#2a2a3e"
+	local border_width = th.border_width or 1
 
 	-- Draw background
-	gfx:fill_rounded_rect(x, y, w, h, radius, bg)
+	if gfx.fill_rounded_rect then
+		gfx:fill_rounded_rect(x, y, w, h, radius, bg)
+	end
 
 	-- Draw border
-	gfx:stroke_rounded_rect(x, y, w, h, radius, border, border_width)
+	if gfx.stroke_rounded_rect then
+		gfx:stroke_rounded_rect(x, y, w, h, radius, border, border_width)
+	end
 end
 
 -- Title bar component
 function Components.title_bar(gfx, x, y, w, title, opts)
+	if not gfx then
+		return 35
+	end
 	opts = opts or {}
 	local th = t()
 
-	local color = opts.color or th.text_primary
-	local accent = opts.accent or th.accent_primary
+	local color = opts.color or th.text_primary or "#ffffff"
+	local accent = opts.accent or th.accent_primary or "#00d4ff"
 	local font = opts.font or "large"
 	local show_line = opts.show_line ~= false
 
 	-- Draw title
-	gfx:text(x, y + 20, title, color, font)
+	if gfx.text then
+		gfx:text(x, y + 20, title, color, font)
+	end
 
 	-- Draw accent line
-	if show_line then
-		local line_y = y + 28
+	if show_line and gfx.line then
+		local line_y = y + 42
 		gfx:line(x, line_y, x + w, line_y, accent, 2)
 	end
 
@@ -122,14 +188,14 @@ function Components.progress_bar(gfx, x, y, w, h, progress, opts)
 	local radius = opts.radius or (h / 2)
 
 	-- Clamp progress to 0-1
-	progress = math.max(0, math.min(1, progress))
+	progress = max(0, min(1, progress))
 
 	-- Draw background
 	gfx:fill_rounded_rect(x, y, w, h, radius, bg)
 
 	-- Draw fill
 	if progress > 0 then
-		local fill_w = math.max(h, w * progress)
+		local fill_w = max(h, w * progress)
 		gfx:fill_rounded_rect(x, y, fill_w, h, radius, fg)
 	end
 
@@ -197,7 +263,7 @@ function Components.sparkline(gfx, x, y, w, h, data, opts)
 		local x2 = x + i * step
 		local y2 = y + h - ((data[i + 1] - min_val) / range * h)
 
-		gfx:line(math.floor(x1), math.floor(y1), math.floor(x2), math.floor(y2), color, thickness)
+		gfx:line(floor(x1), floor(y1), floor(x2), floor(y2), color, thickness)
 	end
 
 	return h

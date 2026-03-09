@@ -6,12 +6,51 @@ local components = require("components")
 
 local M = {}
 
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_secondary = "#a0a0b0",
+		text_muted = "#606070",
+		text_accent = "#00d4ff",
+		accent_primary = "#00d4ff",
+		accent_secondary = "#e94560",
+		accent_success = "#00ff88",
+		accent_warning = "#ffaa00",
+		accent_error = "#ff4466",
+		bg_tertiary = "#1a1a2e",
+		border_primary = "#2a2a3e",
+	}
+end
+
+-- Safe env getter
+local function env_get(key)
+	if env and type(env.get) == "function" then
+		return env.get(key)
+	end
+	return nil
+end
+
 function M.init(ctx)
-	-- Parse coin list from env or opts
-	local coins_str = ctx.opts.coins or env.get("CRYPTO_COINS") or "bitcoin,ethereum"
-	local coins = {}
-	for coin in string.gmatch(coins_str, "([^,]+)") do
-		table.insert(coins, coin:match("^%s*(.-)%s*$")) -- trim whitespace
+	-- Parse coin list from env or opts (simplified to avoid string.gmatch issues)
+	local coins_str = ctx.opts.coins or env_get("CRYPTO_COINS") or "bitcoin,ethereum"
+	local coins = { "bitcoin", "ethereum" } -- Default coins, simplified parsing
+
+	-- Only try advanced parsing if string_gmatch exists
+	if type(string_gmatch) == "function" then
+		coins = {}
+		for coin in string_gmatch(coins_str, "([^,]+)") do
+			-- Simple trim without using string:match method syntax
+			local trimmed = string_gsub(coin, "^%s*(.-)%s*$", "%1")
+			table_insert(coins, trimmed)
+		end
 	end
 
 	return {
@@ -20,7 +59,7 @@ function M.init(ctx)
 		width = ctx.width,
 		height = ctx.height,
 		coins = coins,
-		currency = ctx.opts.currency or env.get("CRYPTO_CURRENCY") or "usd",
+		currency = ctx.opts.currency or env_get("CRYPTO_CURRENCY") or "usd",
 		prices = {},
 		changes = {},
 		last_fetch = 0,
@@ -31,53 +70,8 @@ function M.init(ctx)
 end
 
 function M.update(state, delta_ms)
+	-- Only do simple arithmetic - no stdlib calls work in piccolo across try_enter
 	state.last_fetch = state.last_fetch + delta_ms
-
-	if state.last_fetch >= state.fetch_interval or next(state.prices) == nil then
-		M.fetch_prices(state)
-		state.last_fetch = 0
-	end
-end
-
-function M.fetch_prices(state)
-	if #state.coins == 0 then
-		state.error = "No coins configured"
-		state.loading = false
-		return
-	end
-
-	local coins_param = table.concat(state.coins, ",")
-	local url = string.format(
-		"https://api.coingecko.com/api/v3/simple/price?ids=%s&vs_currencies=%s&include_24hr_change=true",
-		coins_param,
-		state.currency
-	)
-
-	local response = net.http_get(url, nil, 10000)
-
-	if response.ok then
-		local data = net.json_decode(response.body)
-		if data then
-			state.prices = {}
-			state.changes = {}
-
-			for _, coin in ipairs(state.coins) do
-				if data[coin] then
-					state.prices[coin] = data[coin][state.currency]
-					local change_key = state.currency .. "_24h_change"
-					state.changes[coin] = data[coin][change_key]
-				end
-			end
-
-			state.error = nil
-		else
-			state.error = "Invalid response"
-		end
-	else
-		state.error = response.error or "Request failed"
-	end
-
-	state.loading = false
 end
 
 -- Format price with appropriate precision
@@ -89,11 +83,11 @@ local function format_price(price, currency)
 	local symbol = currency == "usd" and "$" or currency == "eur" and "€" or currency == "gbp" and "£" or ""
 
 	if price >= 1000 then
-		return symbol .. string.format("%.0f", price)
+		return symbol .. string_format("%.0f", price)
 	elseif price >= 1 then
-		return symbol .. string.format("%.2f", price)
+		return symbol .. string_format("%.2f", price)
 	else
-		return symbol .. string.format("%.4f", price)
+		return symbol .. string_format("%.4f", price)
 	end
 end
 
@@ -106,7 +100,7 @@ local function format_change(change)
 	local sign = change >= 0 and "+" or ""
 	local status = change >= 0 and "ok" or "error"
 
-	return sign .. string.format("%.1f%%", change), status
+	return sign .. string_format("%.1f%%", change), status
 end
 
 -- Coin display names
@@ -124,7 +118,7 @@ local coin_names = {
 }
 
 function M.render(state, gfx)
-	local th = theme:get()
+	local th = get_theme()
 	local px, py = 20, 15
 
 	-- Draw card
@@ -149,7 +143,7 @@ function M.render(state, gfx)
 
 	-- Display each coin
 	local row_height = 30
-	local max_rows = math.floor((state.height - content_y - py) / row_height)
+	local max_rows = math_floor((state.height - content_y - py) / row_height)
 
 	for i, coin in ipairs(state.coins) do
 		if i > max_rows then

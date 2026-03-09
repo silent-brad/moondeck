@@ -6,6 +6,30 @@ local components = require("components")
 
 local M = {}
 
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_secondary = "#a0a0b0",
+		text_muted = "#606070",
+		text_accent = "#00d4ff",
+		accent_primary = "#00d4ff",
+		accent_secondary = "#e94560",
+		accent_success = "#00ff88",
+		accent_warning = "#ffaa00",
+		accent_error = "#ff4466",
+		bg_tertiary = "#1a1a2e",
+		border_primary = "#2a2a3e",
+	}
+end
+
 function M.init(ctx)
 	return {
 		x = ctx.x,
@@ -22,56 +46,8 @@ function M.init(ctx)
 end
 
 function M.update(state, delta_ms)
+	-- Only do simple arithmetic - no stdlib calls work in piccolo across try_enter
 	state.last_fetch = state.last_fetch + delta_ms
-
-	if state.last_fetch >= state.fetch_interval or state.verse_text == nil then
-		M.fetch_verse(state)
-		state.last_fetch = 0
-	end
-end
-
-function M.fetch_verse(state)
-	local url = "https://labs.bible.org/api/?passage=votd&type=json&formatting=plain"
-
-	local response = net.http_get(url, nil, 10000)
-
-	if response.ok then
-		local data = net.json_decode(response.body)
-		if data and #data > 0 then
-			-- API returns array, combine all verses
-			local texts = {}
-			local first_ref = nil
-			local last_ref = nil
-
-			for _, verse in ipairs(data) do
-				table.insert(texts, verse.text)
-				if not first_ref then
-					first_ref = verse.bookname .. " " .. verse.chapter .. ":" .. verse.verse
-				end
-				last_ref = verse.bookname .. " " .. verse.chapter .. ":" .. verse.verse
-			end
-
-			state.verse_text = table.concat(texts, " ")
-
-			-- Format reference
-			if #data == 1 then
-				state.verse_ref = first_ref
-			else
-				-- Extract just verse numbers for range
-				local first_v = data[1].verse
-				local last_v = data[#data].verse
-				state.verse_ref = data[1].bookname .. " " .. data[1].chapter .. ":" .. first_v .. "-" .. last_v
-			end
-
-			state.error = nil
-		else
-			state.error = "Invalid response"
-		end
-	else
-		state.error = response.error or "Request failed"
-	end
-
-	state.loading = false
 end
 
 -- Word wrap helper
@@ -79,26 +55,26 @@ local function wrap_text(text, max_chars)
 	local lines = {}
 	local line = ""
 
-	for word in string.gmatch(text, "%S+") do
+	for word in string_gmatch(text, "%S+") do
 		if #line + #word + 1 <= max_chars then
 			line = line == "" and word or line .. " " .. word
 		else
 			if line ~= "" then
-				table.insert(lines, line)
+				table_insert(lines, line)
 			end
 			line = word
 		end
 	end
 
 	if line ~= "" then
-		table.insert(lines, line)
+		table_insert(lines, line)
 	end
 
 	return lines
 end
 
 function M.render(state, gfx)
-	local th = theme:get()
+	local th = get_theme()
 	local px, py = 20, 15
 
 	-- Draw card
@@ -125,12 +101,12 @@ function M.render(state, gfx)
 
 	if state.verse_text then
 		-- Calculate characters per line based on width
-		local chars_per_line = math.floor((state.width - px * 2) / 7)
+		local chars_per_line = math_floor((state.width - px * 2) / 7)
 		local lines = wrap_text(state.verse_text, chars_per_line)
 
 		-- Calculate how many lines we can show
 		local line_height = 18
-		local max_lines = math.floor((state.height - content_y - 40) / line_height)
+		local max_lines = math_floor((state.height - content_y - 40) / line_height)
 
 		-- Draw verse text
 		for i, line in ipairs(lines) do

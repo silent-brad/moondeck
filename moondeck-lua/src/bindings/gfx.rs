@@ -1,6 +1,6 @@
 use anyhow::Result;
 use moondeck_core::gfx::{Color, Font};
-use piccolo::{Callback, CallbackReturn, Lua, String as LuaString, Table, Value};
+use piccolo::{Callback, CallbackReturn, Lua, Table, Value};
 use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug)]
@@ -135,6 +135,22 @@ fn color_from_value(val: Value) -> Color {
     }
 }
 
+fn value_to_i32(val: Value) -> i32 {
+    match val {
+        Value::Integer(i) => i as i32,
+        Value::Number(n) => n as i32,
+        _ => 0,
+    }
+}
+
+fn value_to_u32(val: Value) -> u32 {
+    match val {
+        Value::Integer(i) => i.max(0) as u32,
+        Value::Number(n) => n.max(0.0) as u32,
+        _ => 0,
+    }
+}
+
 thread_local! {
     pub static DRAW_COMMANDS: LuaDrawCommands = LuaDrawCommands::new();
 }
@@ -163,15 +179,15 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "fill_rect",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x, y, w, h, color): (Value, i64, i64, i64, i64, Value) =
+                let (_self, x, y, w, h, color): (Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::FillRect {
-                        x: x as i32 + ox,
-                        y: y as i32 + oy,
-                        w: w as u32,
-                        h: h as u32,
+                        x: value_to_i32(x) + ox,
+                        y: value_to_i32(y) + oy,
+                        w: value_to_u32(w),
+                        h: value_to_u32(h),
                         color: color_from_value(color),
                     })
                 });
@@ -185,17 +201,17 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "stroke_rect",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x, y, w, h, color, thickness): (Value, i64, i64, i64, i64, Value, i64) =
+                let (_self, x, y, w, h, color, thickness): (Value, Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::StrokeRect {
-                        x: x as i32 + ox,
-                        y: y as i32 + oy,
-                        w: w as u32,
-                        h: h as u32,
+                        x: value_to_i32(x) + ox,
+                        y: value_to_i32(y) + oy,
+                        w: value_to_u32(w),
+                        h: value_to_u32(h),
                         color: color_from_value(color),
-                        thickness: thickness as u32,
+                        thickness: value_to_u32(thickness),
                     })
                 });
                 stack.replace(ctx, Value::Nil);
@@ -208,16 +224,16 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "fill_rounded_rect",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x, y, w, h, radius, color): (Value, i64, i64, i64, i64, i64, Value) =
+                let (_self, x, y, w, h, radius, color): (Value, Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::FillRoundedRect {
-                        x: x as i32 + ox,
-                        y: y as i32 + oy,
-                        w: w as u32,
-                        h: h as u32,
-                        radius: radius as u32,
+                        x: value_to_i32(x) + ox,
+                        y: value_to_i32(y) + oy,
+                        w: value_to_u32(w),
+                        h: value_to_u32(h),
+                        radius: value_to_u32(radius),
                         color: color_from_value(color),
                     })
                 });
@@ -231,14 +247,14 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "circle",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, cx, cy, radius, color): (Value, i64, i64, i64, Value) =
+                let (_self, cx, cy, radius, color): (Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::FillCircle {
-                        cx: cx as i32 + ox,
-                        cy: cy as i32 + oy,
-                        radius: radius as u32,
+                        cx: value_to_i32(cx) + ox,
+                        cy: value_to_i32(cy) + oy,
+                        radius: value_to_u32(radius),
                         color: color_from_value(color),
                     })
                 });
@@ -252,14 +268,14 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "fill_circle",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, cx, cy, radius, color): (Value, i64, i64, i64, Value) =
+                let (_self, cx, cy, radius, color): (Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::FillCircle {
-                        cx: cx as i32 + ox,
-                        cy: cy as i32 + oy,
-                        radius: radius as u32,
+                        cx: value_to_i32(cx) + ox,
+                        cy: value_to_i32(cy) + oy,
+                        radius: value_to_u32(radius),
                         color: color_from_value(color),
                     })
                 });
@@ -273,16 +289,16 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "stroke_circle",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, cx, cy, radius, color, thickness): (Value, i64, i64, i64, Value, i64) =
+                let (_self, cx, cy, radius, color, thickness): (Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::StrokeCircle {
-                        cx: cx as i32 + ox,
-                        cy: cy as i32 + oy,
-                        radius: radius as u32,
+                        cx: value_to_i32(cx) + ox,
+                        cy: value_to_i32(cy) + oy,
+                        radius: value_to_u32(radius),
                         color: color_from_value(color),
-                        thickness: thickness as u32,
+                        thickness: value_to_u32(thickness),
                     })
                 });
                 stack.replace(ctx, Value::Nil);
@@ -295,18 +311,18 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "stroke_rounded_rect",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x, y, w, h, radius, color, thickness): (Value, i64, i64, i64, i64, i64, Value, i64) =
+                let (_self, x, y, w, h, radius, color, thickness): (Value, Value, Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::StrokeRoundedRect {
-                        x: x as i32 + ox,
-                        y: y as i32 + oy,
-                        w: w as u32,
-                        h: h as u32,
-                        radius: radius as u32,
+                        x: value_to_i32(x) + ox,
+                        y: value_to_i32(y) + oy,
+                        w: value_to_u32(w),
+                        h: value_to_u32(h),
+                        radius: value_to_u32(radius),
                         color: color_from_value(color),
-                        thickness: thickness as u32,
+                        thickness: value_to_u32(thickness),
                     })
                 });
                 stack.replace(ctx, Value::Nil);
@@ -319,17 +335,17 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "line",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x1, y1, x2, y2, color, thickness): (Value, i64, i64, i64, i64, Value, i64) =
+                let (_self, x1, y1, x2, y2, color, thickness): (Value, Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::Line {
-                        x1: x1 as i32 + ox,
-                        y1: y1 as i32 + oy,
-                        x2: x2 as i32 + ox,
-                        y2: y2 as i32 + oy,
+                        x1: value_to_i32(x1) + ox,
+                        y1: value_to_i32(y1) + oy,
+                        x2: value_to_i32(x2) + ox,
+                        y2: value_to_i32(y2) + oy,
                         color: color_from_value(color),
-                        thickness: thickness as u32,
+                        thickness: value_to_u32(thickness),
                     })
                 });
                 stack.replace(ctx, Value::Nil);
@@ -342,16 +358,31 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
             ctx,
             "text",
             Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
-                let (_self, x, y, text, color, font_size): (Value, i64, i64, LuaString, Value, LuaString) =
+                let (_self, x, y, text, color, font_size): (Value, Value, Value, Value, Value, Value) =
                     stack.consume(ctx)?;
+                
+                // Convert text to string - handle both string and number values
+                let text_str = match text {
+                    Value::String(s) => s.to_str().unwrap_or("").to_string(),
+                    Value::Integer(i) => i.to_string(),
+                    Value::Number(n) => n.to_string(),
+                    _ => String::new(),
+                };
+                
+                // Convert font_size to string
+                let font_str = match font_size {
+                    Value::String(s) => s.to_str().unwrap_or("medium").to_string(),
+                    _ => "medium".to_string(),
+                };
+                
                 let (ox, oy) = DRAW_COMMANDS.with(|dc| dc.get_offset());
                 DRAW_COMMANDS.with(|dc| {
                     dc.push(DrawCommand::Text {
-                        x: x as i32 + ox,
-                        y: y as i32 + oy,
-                        text: text.to_str().unwrap_or("").to_string(),
+                        x: value_to_i32(x) + ox,
+                        y: value_to_i32(y) + oy,
+                        text: text_str,
                         color: color_from_value(color),
-                        font: parse_font(font_size.to_str().unwrap_or("medium")),
+                        font: parse_font(&font_str),
                     })
                 });
                 stack.replace(ctx, Value::Nil);

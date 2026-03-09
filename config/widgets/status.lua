@@ -6,6 +6,30 @@ local components = require("components")
 
 local M = {}
 
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_secondary = "#a0a0b0",
+		text_muted = "#606070",
+		text_accent = "#00d4ff",
+		accent_primary = "#00d4ff",
+		accent_secondary = "#e94560",
+		accent_success = "#00ff88",
+		accent_warning = "#ffaa00",
+		accent_error = "#ff4466",
+		bg_tertiary = "#1a1a2e",
+		border_primary = "#2a2a3e",
+	}
+end
+
 function M.init(ctx)
 	return {
 		x = ctx.x,
@@ -69,7 +93,7 @@ local function rssi_to_strength(rssi)
 end
 
 function M.render(state, gfx)
-	local th = theme:get()
+	local th = get_theme()
 	local px, py = 20, 15
 
 	-- Draw card

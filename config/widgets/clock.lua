@@ -6,6 +6,22 @@ local components = require("components")
 
 local M = {}
 
+-- Safe theme getter with fallback
+local function get_theme()
+	if theme and theme.get then
+		local result = theme:get()
+		if result then
+			return result
+		end
+	end
+	-- Fallback colors
+	return {
+		text_primary = "#ffffff",
+		text_muted = "#606070",
+		accent_primary = "#00d4ff",
+	}
+end
+
 function M.init(ctx)
 	return {
 		x = ctx.x,
@@ -23,14 +39,35 @@ function M.update(state, delta_ms)
 	state.last_update = state.last_update + delta_ms
 end
 
+-- Safe floor function
+local function floor(n)
+	if math and math.floor then
+		return math.floor(n)
+	end
+	-- Fallback: truncate towards zero
+	local i = n - (n % 1)
+	if n < 0 and i ~= n then
+		return i - 1
+	end
+	return i
+end
+
+-- Safe string format (for time display)
+local function format_time_component(n)
+	if n < 10 then
+		return "0" .. n
+	end
+	return "" .. n
+end
+
 function M.render(state, gfx)
-	local th = theme:get()
-	local now = device.seconds()
+	local th = get_theme()
+	local now = device and device.seconds and device.seconds() or 0
 
 	-- Calculate time components
 	local secs = now % 60
-	local mins = math.floor(now / 60) % 60
-	local hours = math.floor(now / 3600) % 24
+	local mins = floor(now / 60) % 60
+	local hours = floor(now / 3600) % 24
 
 	-- Draw card background
 	components.card(gfx, 0, 0, state.width, state.height)
@@ -53,37 +90,41 @@ function M.render(state, gfx)
 	-- Build time string
 	local time_str
 	if state.show_seconds then
-		time_str = string.format("%02d:%02d:%02d", display_hours, mins, secs)
+		time_str = format_time_component(display_hours) .. ":" .. format_time_component(mins) .. ":" .. format_time_component(secs)
 	else
-		time_str = string.format("%02d:%02d", display_hours, mins)
+		time_str = format_time_component(display_hours) .. ":" .. format_time_component(mins)
 	end
 
 	-- Draw time (centered, large)
 	local time_x = state.width / 2 - (#time_str * 14) / 2
 	local time_y = state.height / 2 - 10
 
-	gfx:text(time_x, time_y, time_str, th.text_primary, "xlarge")
+	if gfx and gfx.text then
+		gfx:text(time_x, time_y, time_str, th.text_primary or "#ffffff", "xlarge")
 
-	-- Draw AM/PM indicator
-	if not state.format_24h then
-		gfx:text(time_x + #time_str * 14 + 10, time_y + 8, am_pm, th.text_muted, "medium")
-	end
+		-- Draw AM/PM indicator
+		if not state.format_24h then
+			gfx:text(time_x + #time_str * 14 + 10, time_y + 8, am_pm, th.text_muted or "#606070", "medium")
+		end
 
-	-- Draw date if enabled
-	if state.show_date then
-		local days = math.floor(now / 86400)
-		-- Simple day calculation (approximate)
-		local weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
-		local weekday = weekdays[(days % 7) + 1]
+		-- Draw date if enabled
+		if state.show_date then
+			local days = floor(now / 86400)
+			-- Simple day calculation (approximate)
+			local weekdays = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }
+			local weekday = weekdays[(days % 7) + 1]
 
-		local date_str = weekday .. " • Day " .. tostring(days % 365 + 1)
-		local date_x = state.width / 2 - (#date_str * 4)
+			local date_str = weekday .. " • Day " .. (days % 365 + 1)
+			local date_x = state.width / 2 - (#date_str * 4)
 
-		gfx:text(date_x, time_y + 40, date_str, th.text_muted, "medium")
+			gfx:text(date_x, time_y + 40, date_str, th.text_muted or "#606070", "medium")
+		end
 	end
 
 	-- Accent line at top
-	gfx:line(px, py, state.width - px, py, th.accent_primary, 2)
+	if gfx and gfx.line then
+		gfx:line(px, py, state.width - px, py, th.accent_primary or "#00d4ff", 2)
+	end
 end
 
 function M.on_event(state, event)

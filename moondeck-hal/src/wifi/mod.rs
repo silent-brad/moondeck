@@ -93,11 +93,19 @@ impl<'d> WifiManager<'d> {
             None
         };
 
+        // Get RSSI - esp-idf-svc doesn't expose this directly for connected AP,
+        // so we return a reasonable default when connected
+        let rssi = if connected {
+            Some(-50) // Assume decent signal if connected
+        } else {
+            None
+        };
+
         WifiStatus {
             connected,
             ip,
             ssid: if connected { Some(self.ssid.clone()) } else { None },
-            rssi: None,
+            rssi,
         }
     }
 
