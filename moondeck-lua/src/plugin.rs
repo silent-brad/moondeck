@@ -107,6 +107,28 @@ impl WidgetPlugin {
                             }
                         }
                         serde_json::Value::String(s) => { opts_table.set(lctx, key_str, lctx.intern(s.as_bytes()))?; }
+                        serde_json::Value::Array(arr) => {
+                            let arr_table = Table::new(&lctx);
+                            for (i, item) in arr.iter().enumerate() {
+                                match item {
+                                    serde_json::Value::String(s) => {
+                                        arr_table.set(lctx, (i + 1) as i64, lctx.intern(s.as_bytes()))?;
+                                    }
+                                    serde_json::Value::Number(n) => {
+                                        if let Some(i_val) = n.as_i64() {
+                                            arr_table.set(lctx, (i + 1) as i64, i_val)?;
+                                        } else if let Some(f_val) = n.as_f64() {
+                                            arr_table.set(lctx, (i + 1) as i64, f_val)?;
+                                        }
+                                    }
+                                    serde_json::Value::Bool(b) => {
+                                        arr_table.set(lctx, (i + 1) as i64, *b)?;
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            opts_table.set(lctx, key_str, arr_table)?;
+                        }
                         _ => {}
                     }
                 }
