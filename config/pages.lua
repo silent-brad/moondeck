@@ -4,10 +4,9 @@
 return {
 	pages = {
 		{
-			id = "test",
-			title = "Test",
-			layout = "half_half",
-			--layout = "main_sidebar",
+			id = "home",
+			title = "Home",
+			layout = "quad",
 			widgets = {
 				{
 					module = "widgets.sysinfo",
@@ -21,15 +20,20 @@ return {
 					update_interval = 300000,
 					opts = {},
 				},
-
-				--[[
-        {
+				{
 					module = "widgets.quote",
 					slot = 3,
 					update_interval = 60000,
 					opts = {},
 				},
-        --]]
+				{
+					module = "widgets.crypto",
+					slot = 4,
+					update_interval = 60000,
+					opts = {
+						coins = { "bitcoin", "ethereum", "litecoin", "monero" },
+					},
+				},
 			},
 		},
 	},

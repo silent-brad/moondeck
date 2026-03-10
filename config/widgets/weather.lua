@@ -32,7 +32,7 @@ function M.update(state, delta_ms)
 	state.last_fetch = state.last_fetch + delta_ms
 	if state.loading ~= nil and state.fetch_interval and state.last_fetch >= state.fetch_interval then
 		local api_key = env and env.get and env.get("WEATHER_API_KEY")
-		if api_key and net and net.http_get then
+		if api_key then
 			-- URL-encode city name (replace spaces with %20)
 			local raw_city = state.city or "New York"
 			local city = ""

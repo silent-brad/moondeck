@@ -1,19 +1,46 @@
 #+TITLE: TODO List for MoonDeck
 
-* DONE In ~moondeck-core/src/color.rs~ (and other places which reference it), remove color consts and simply specify rgb values
+* DONE
 
-* DONE In ~moondeck-core/build.rs~ and ~moondeck-core/src/ttf-font.rs~, reduce LOC/make cleaner
+** DONE In ~moondeck-core/src/color.rs~ (and other places which reference it), remove color consts and simply specify rgb values
 
-* DONE Make widgets work correctly/be simple to configure
+** DONE In ~moondeck-core/build.rs~ and ~moondeck-core/src/ttf-font.rs~, reduce LOC/make cleaner
+
+** DONE Make widgets work correctly/be simple to configure
   Revise update function in `moondeck-lua/src/plugins.rs`
 
+** DONE Revise flake to be cleaner
 
-* TODO Revise/simplify moondeck-lua/config structure
 
-* TODO Reduce LOC/dependencies
+* TODO
+
+** TODO Add more widgets
+
+*** DONE Sysinfo
+*** DONE Weather
+*** DONE Quote
+*** DONE Crypto
+
+*** TODO Bible
+*** TODO RSS
+*** TODO Stocks
+*** TODO Clock
+*** TODO Status
+
+
+** TODO Handle layouts card/component sizing
+  Make more compact?
+
+** TODO Brush up loading screen
+
+** TODO Revise design
+
+** TODO Revise/simplify moondeck-lua/config structure
+
+** TODO Reduce LOC/dependencies
   Use macros?
 
-* TODO Update docs
+** TODO Test on MacOS
 
-* TODO Revise flake to be cleaner
+** TODO Update docs
 

@@ -27,14 +27,14 @@
 #+begin_src env
 WIFI_SSID=your_wifi_ssid
 WIFI_PASSWORD=your_wifi_password
-#+begin_src 
+#+end_src
 
 ** Theme
 
 #+begin_src env
 THEME=dark              # Options: dark, light, mint
 TIMEZONE=America/New_York
-#+begin_src 
+#+end_src
 
 ** Weather (OpenWeatherMap)
 
@@ -42,14 +42,14 @@ TIMEZONE=America/New_York
 WEATHER_API_KEY=your_key
 WEATHER_CITY=New York
 WEATHER_UNITS=imperial  # or metric
-#+begin_src 
+#+end_src
 
 ** Stocks (Stockdata.org)
 
 #+begin_src env
 STOCKS_API_KEY=your_key
 STOCKS_SYMBOLS=AAPL,GOOGL,MSFT,TSLA
-#+begin_src 
+#+end_src
 
 ** Crypto (CoinGecko - no key needed)
 

@@ -6,52 +6,10 @@ local components = require("components")
 
 local M = {}
 
--- Safe theme getter with fallback
-local function get_theme()
-	if theme and theme.get then
-		local result = theme:get()
-		if result then
-			return result
-		end
-	end
-	-- Fallback colors
-	return {
-		text_primary = "#ffffff",
-		text_secondary = "#a0a0b0",
-		text_muted = "#606070",
-		text_accent = "#00d4ff",
-		accent_primary = "#00d4ff",
-		accent_secondary = "#e94560",
-		accent_success = "#00ff88",
-		accent_warning = "#ffaa00",
-		accent_error = "#ff4466",
-		bg_tertiary = "#1a1a2e",
-		border_primary = "#2a2a3e",
-	}
-end
-
--- Safe env getter
-local function env_get(key)
-	if env and type(env.get) == "function" then
-		return env.get(key)
-	end
-	return nil
-end
-
 function M.init(ctx)
-	-- Parse coin list from env or opts (simplified to avoid string.gmatch issues)
-	local coins_str = ctx.opts.coins or env_get("CRYPTO_COINS") or "bitcoin,ethereum"
-	local coins = { "bitcoin", "ethereum" } -- Default coins, simplified parsing
-
-	-- Only try advanced parsing if string_gmatch exists
-	if type(string_gmatch) == "function" then
-		coins = {}
-		for coin in string_gmatch(coins_str, "([^,]+)") do
-			-- Simple trim without using string:match method syntax
-			local trimmed = string_gsub(coin, "^%s*(.-)%s*$", "%1")
-			table_insert(coins, trimmed)
-		end
-	end
+	-- TODO: Add env var for coins
+	local coins = ctx.opts.coins or { "bitcoin", "ethereum" }
+	local currency = ctx.opts.currency or "usd"
 
 	return {
 		x = ctx.x,
@@ -59,19 +17,64 @@ function M.init(ctx)
 		width = ctx.width,
 		height = ctx.height,
 		coins = coins,
-		currency = ctx.opts.currency or env_get("CRYPTO_CURRENCY") or "usd",
+		currency = currency,
 		prices = {},
 		changes = {},
 		last_fetch = 0,
-		fetch_interval = ctx.opts.update_interval or 60000, -- 1 minute
+		fetch_interval = ctx.opts.update_interval or 60000,
 		loading = true,
 		error = nil,
 	}
 end
 
 function M.update(state, delta_ms)
-	-- Only do simple arithmetic - no stdlib calls work in piccolo across try_enter
 	state.last_fetch = state.last_fetch + delta_ms
+
+	if state.last_fetch >= state.fetch_interval then
+		state.last_fetch = 0
+
+		-- Build coin IDs string
+		local ids = ""
+		for i = 1, #state.coins do
+			if i > 1 then
+				ids = ids .. ","
+			end
+			ids = ids .. state.coins[i]
+		end
+
+		-- CoinGecko API URL
+		local url = "https://api.coingecko.com/api/v3/simple/price?ids="
+			.. ids
+			.. "&vs_currencies="
+			.. state.currency
+			.. "&include_24hr_change=true"
+
+		local response = net.http_get(url, {}, 15000)
+
+		if response and response.ok and response.body then
+			local data = net.json_decode(response.body)
+
+			if data then
+				for i = 1, #state.coins do
+					local coin = state.coins[i]
+					local coin_data = data[coin]
+					if coin_data then
+						state.prices[coin] = coin_data[state.currency]
+						local change_key = state.currency .. "_24h_change"
+						state.changes[coin] = coin_data[change_key]
+					end
+				end
+				state.loading = false
+				state.error = nil
+			else
+				state.error = "Invalid response"
+				state.loading = false
+			end
+		else
+			state.error = response and response.error or "Network error"
+			state.loading = false
+		end
+	end
 end
 
 -- Format price with appropriate precision
@@ -80,14 +83,21 @@ local function format_price(price, currency)
 		return "—"
 	end
 
-	local symbol = currency == "usd" and "$" or currency == "eur" and "€" or currency == "gbp" and "£" or ""
+	local symbol = ""
+	if currency == "usd" then
+		symbol = "$"
+	elseif currency == "eur" then
+		symbol = "€"
+	elseif currency == "gbp" then
+		symbol = "£"
+	end
 
 	if price >= 1000 then
-		return symbol .. string_format("%.0f", price)
+		return symbol .. util.format("%.0f", price)
 	elseif price >= 1 then
-		return symbol .. string_format("%.2f", price)
+		return symbol .. util.format("%.2f", price)
 	else
-		return symbol .. string_format("%.4f", price)
+		return symbol .. util.format("%.4f", price)
 	end
 end
 
@@ -97,12 +107,19 @@ local function format_change(change)
 		return "—", "info"
 	end
 
-	local sign = change >= 0 and "+" or ""
-	local status = change >= 0 and "ok" or "error"
+	local sign = ""
+	local status = "info"
+	if change >= 0 then
+		sign = "+"
+		status = "ok"
+	else
+		status = "error"
+	end
 
-	return sign .. string_format("%.1f%%", change), status
+	return sign .. util.format("%.1f", change) .. "%", status
 end
 
+-- TODO: Move to config
 -- Coin display names
 local coin_names = {
 	bitcoin = "BTC",
@@ -115,10 +132,12 @@ local coin_names = {
 	avalanche = "AVAX",
 	chainlink = "LINK",
 	polygon = "MATIC",
+	litecoin = "LTC",
+	monero = "XMR",
 }
 
 function M.render(state, gfx)
-	local th = get_theme()
+	local th = theme:get()
 	local px, py = 20, 15
 
 	-- Draw card
@@ -129,7 +148,7 @@ function M.render(state, gfx)
 		accent = th.accent_primary,
 	})
 
-	local content_y = py + title_h + 10
+	local content_y = py + title_h + 25
 
 	if state.loading then
 		components.loading(gfx, px, content_y + 20)
@@ -143,13 +162,14 @@ function M.render(state, gfx)
 
 	-- Display each coin
 	local row_height = 30
-	local max_rows = math_floor((state.height - content_y - py) / row_height)
+	local max_rows = math.floor((state.height - content_y - py) / row_height)
 
-	for i, coin in ipairs(state.coins) do
+	for i = 1, #state.coins do
 		if i > max_rows then
 			break
 		end
 
+		local coin = state.coins[i]
 		local y = content_y + (i - 1) * row_height
 		local name = coin_names[coin] or coin:upper():sub(1, 4)
 		local price = format_price(state.prices[coin], state.currency)
@@ -163,9 +183,12 @@ function M.render(state, gfx)
 		gfx:text(price_x, y, price, th.text_primary, "medium")
 
 		-- Change (right)
-		local change_color = change_status == "ok" and th.accent_success
-			or change_status == "error" and th.accent_error
-			or th.text_muted
+		local change_color = th.text_muted
+		if change_status == "ok" then
+			change_color = th.accent_success
+		elseif change_status == "error" then
+			change_color = th.accent_error
+		end
 		gfx:text(state.width - px - 60, y, change_str, change_color, "small")
 	end
 end

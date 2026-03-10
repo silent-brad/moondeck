@@ -41,7 +41,7 @@ function M.init(ctx)
 		quote_author = nil,
 		quote_index = 1,
 		last_change = 0,
-		change_interval = ctx.opts.change_interval or 60000, -- 1 minute
+		change_interval = ctx.opts.change_interval or 60000,
 		use_api = ctx.opts.use_api or false,
 		loading = false,
 		error = nil,
@@ -60,35 +60,19 @@ function M.update(state, delta_ms)
 	end
 end
 
--- Word wrap helper
-local function wrap_text(text, max_chars)
-	local lines = {}
-	local line = ""
-
-	for word in string.gmatch(text, "%S+") do
-		if #line + #word + 1 <= max_chars then
-			line = line == "" and word or line .. " " .. word
-		else
-			if line ~= "" then
-				table.insert(lines, line)
-			end
-			line = word
-		end
-	end
-
-	if line ~= "" then
-		table.insert(lines, line)
-	end
-
-	return lines
-end
-
 function M.render(state, gfx)
 	local th = theme:get()
 	local px, py = 25, 20
 
 	-- Draw card
 	components.card(gfx, 0, 0, state.width, state.height)
+
+	-- Title bar
+	local title_h = components.title_bar(gfx, px, py, state.width - px * 2, "Quote", {
+		accent = th.accent_primary,
+	})
+
+	local content_y = py + title_h + 15
 
 	if state.loading then
 		components.loading(gfx, px, state.height / 2 - 10)
@@ -101,19 +85,18 @@ function M.render(state, gfx)
 	end
 
 	-- Opening quotation mark (decorative)
-	gfx:text(px - 5, py + 10, '"', th.accent_primary, "xlarge")
+	gfx:text(px - 5, content_y, '"', th.accent_primary, "xlarge")
 
 	-- Calculate text layout
-	local chars_per_line = floor((state.width - px * 2 - 20) / 8)
-	local lines = wrap_text(state.quote_text, chars_per_line)
+	local chars_per_line = math.floor((state.width - px * 2 - 20) / 8)
+	local lines = util:word_wrap(state.quote_text, chars_per_line)
 
 	local line_height = 22
-	local text_start_y = py + 20
-	local max_lines = floor((state.height - text_start_y - 50) / line_height)
+	local text_start_y = content_y + 20
+	local max_lines = math.floor((state.height - text_start_y - 50) / line_height)
 
 	-- Draw quote text
-	local num_lines = #lines
-	for i = 1, num_lines do
+	for i = 1, #lines do
 		if i > max_lines then
 			gfx:text(px + 15, text_start_y + (max_lines - 1) * line_height, "...", th.text_primary, "medium")
 			break
@@ -133,7 +116,6 @@ end
 
 function M.on_event(state, event)
 	if event.type == "tap" then
-		-- Show next quote by resetting the timer
 		state.last_change = state.change_interval
 		return true
 	end
