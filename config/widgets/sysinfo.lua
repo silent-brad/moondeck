@@ -1,9 +1,6 @@
 -- System Info Widget
 -- Displays device system information
 
-local theme = require("theme")
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)
@@ -142,24 +139,6 @@ function M.render(state, gfx)
 		bg = th.bg_tertiary,
 		fg = wifi_color,
 	})
-
-	content_y = content_y + row_height + 25
-
-	--[[
-	-- Divider
-	components.divider(gfx, px, content_y, state.width - px * 2, { color = th.border_primary })
-
-	content_y = content_y + 15
-
-	-- Device info
-	gfx:text(px, content_y, "Device", th.text_muted, "small")
-	gfx:text(px, content_y + 14, "ESP32-S3 • 800x480 LCD", th.text_secondary, "small")
-
-	-- Status indicators
-	local status_y = content_y
-	components.status(gfx, px + col_width, status_y, "WiFi Connected", "ok")
-	components.status(gfx, px + col_width, status_y + 18, "Display Active", "ok")
-  --]]
 end
 
 function M.on_event(state, event)

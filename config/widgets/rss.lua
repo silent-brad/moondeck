@@ -1,8 +1,6 @@
 -- RSS Widget
 -- Fetches feed entries from Miniflux API
 
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

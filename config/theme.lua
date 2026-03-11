@@ -1,5 +1,4 @@
 -- Moondeck Theme Configuration
--- Inspired by TRMNL's clean, focused design philosophy
 
 local themes = {}
 

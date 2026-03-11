@@ -1,8 +1,4 @@
 -- Quote Widget
--- Displays inspirational quotes with elegant styling
-
-local theme = require("theme")
-local components = require("components")
 
 local M = {}
 

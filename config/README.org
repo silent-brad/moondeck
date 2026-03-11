@@ -61,7 +61,7 @@ CRYPTO_CURRENCY=usd
 ** RSS (Miniflux)
 
 #+begin_src env
-MINIFLUX_URL=https://your-miniflux-instance.com/v1
+MINIFLUX_URL=https://your-miniflux-instance.com
 MINIFLUX_API_KEY=your_key
 MINIFLUX_LIMIT=10
 #+end_src
@@ -146,9 +146,6 @@ return M
 ** Using Components
 
 #+begin_src lua
-local theme = require("theme")
-local components = require("components")
-
 function M.render(state, gfx)
     local th = theme:get()
     

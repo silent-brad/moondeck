@@ -1,7 +1,4 @@
 -- Moondeck Layout System
--- Grid-based layout inspired by TRMNL's framework
-
-local theme = require("theme")
 
 local Layout = {}
 

@@ -1,8 +1,6 @@
 -- Bible Verse Widget
 -- Fetches random verses from bible-api.com
 
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

@@ -1,7 +1,5 @@
 -- Status Widget
 
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

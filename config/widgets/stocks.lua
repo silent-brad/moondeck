@@ -1,8 +1,6 @@
 -- Stocks Widget
 -- Fetches stock prices from Finnhub.io API
 
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

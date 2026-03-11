@@ -40,7 +40,5 @@
 
 ** TODO Revise/simplify moondeck-lua/config structure
 
-** TODO Test on MacOS
-
 ** TODO Update docs
 

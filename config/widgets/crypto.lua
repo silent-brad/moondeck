@@ -1,9 +1,6 @@
 -- Crypto Widget
 -- Fetches cryptocurrency prices from CoinGecko API (no API key required)
 
-local theme = require("theme")
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

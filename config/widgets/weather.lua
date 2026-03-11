@@ -1,9 +1,6 @@
 -- Weather Widget
 -- Fetches and displays weather data from OpenWeatherMap API
 
-local theme = require("theme")
-local components = require("components")
-
 local M = {}
 
 function M.init(ctx)

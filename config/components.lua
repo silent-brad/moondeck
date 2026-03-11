@@ -1,7 +1,4 @@
 -- Moondeck Component Library
--- Reusable UI components inspired by TRMNL's design system
-
-local theme = require("theme")
 
 local Components = {}
 
