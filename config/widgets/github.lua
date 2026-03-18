@@ -71,7 +71,7 @@ function M.update(state, delta_ms)
   end
 end
 
-function M.render(state, gfx)
+ function M.render(state, gfx)
   local th = theme:get()
   local px, py = 20, 15
 
@@ -121,15 +121,15 @@ function M.render(state, gfx)
     return lerp(a[1], b[1], t) * 65536 + lerp(a[2], b[2], t) * 256 + lerp(a[3], b[3], t)
   end
 
-  -- Generate gradient
+  -- Generate gradient (skewed toward target)
   local base = th.accent_error
   local target = th.accent_success
   local heat_colors = {
-    mix(base, base, 0), -- 0 contributions (base color)
-    mix(base, target, 0.25), -- low
-    mix(base, target, 0.5), -- medium
-    mix(base, target, 0.75), -- high
-    mix(target, target, 0), -- very high (target color)
+    mix(base, target, 0), -- 0 contributions (base color)
+    mix(base, target, 0.5), -- low
+    mix(base, target, 0.75), -- medium
+    mix(base, target, 0.9), -- high
+    mix(base, target, 1), -- very high (target color)
   }
 
   -- Map contribution count to heatmap color
