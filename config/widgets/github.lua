@@ -122,7 +122,7 @@ end
   end
 
   -- Generate gradient (skewed toward target)
-  local base = th.accent_error
+  local base = th.accent_secondary
   local target = th.accent_success
   local heat_colors = {
     mix(base, target, 0), -- 0 contributions (base color)
