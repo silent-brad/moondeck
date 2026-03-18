@@ -4,8 +4,8 @@ use moondeck_core::ui::{Page, WidgetInstance};
 use moondeck_hal::EnvConfig;
 use piccolo::{Closure, Executor, Fuel, Lua, StashedExecutor, Value};
 
-const EMBEDDED_INIT_LUA: &str = include_str!("../../config/init.lua");
-const EMBEDDED_PAGES_LUA: &str = include_str!("../../config/pages.lua");
+pub const EMBEDDED_INIT_LUA: &str = include_str!("../../config/init.lua");
+pub const EMBEDDED_PAGES_LUA: &str = include_str!("../../config/pages.lua");
 
 pub struct LuaRuntime {
     lua: Lua,
@@ -25,8 +25,19 @@ impl LuaRuntime {
 
     pub fn init(&mut self, env: &EnvConfig) -> Result<()> {
         bindings::register_all(&mut self.lua, env).context("Failed to register Lua bindings")?;
-        self.load_script(EMBEDDED_INIT_LUA)?;
+        let init_src = self.config_path.as_ref()
+            .and_then(|p| std::fs::read_to_string(format!("{}/init.lua", p)).ok())
+            .unwrap_or_else(|| EMBEDDED_INIT_LUA.to_string());
+        self.load_script(&init_src)?;
         self.run_pending().context("Failed to run init.lua")
+    }
+
+    pub fn read_widget_source(&self, module: &str) -> Option<String> {
+        let base = self.config_path.as_ref()?;
+        // module names are like "widgets.clock" -> "widgets/clock.lua"
+        let rel_path = module.replace('.', "/");
+        let path = format!("{}/{}.lua", base, rel_path);
+        std::fs::read_to_string(path).ok()
     }
 
     pub fn load_script(&mut self, script: &str) -> Result<()> {

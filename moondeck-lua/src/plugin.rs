@@ -10,6 +10,10 @@ use piccolo::{Closure, Executor, Fuel, StashedTable, Table, Value};
 
 include!(concat!(env!("OUT_DIR"), "/embedded_widgets.rs"));
 
+pub fn embedded_widget_sources() -> &'static [(&'static str, &'static str)] {
+    EMBEDDED_WIDGETS
+}
+
 pub struct WidgetPlugin {
     pub module: String,
     module_table: Option<StashedTable>,
@@ -27,9 +31,15 @@ impl WidgetPlugin {
     }
 
     pub fn init(&mut self, runtime: &mut LuaRuntime, ctx: &WidgetContext) -> Result<()> {
-        let source = match self.get_source() {
-            Some(s) => s,
-            None => { log::warn!("Widget not found: {}", self.module); self.initialized = true; return Ok(()); }
+        let fs_source = runtime.read_widget_source(&self.module);
+        let source: std::borrow::Cow<'_, str> = if let Some(ref s) = fs_source {
+            s.as_str().into()
+        } else if let Some(s) = self.get_source() {
+            s.into()
+        } else {
+            log::warn!("Widget not found: {}", self.module);
+            self.initialized = true;
+            return Ok(());
         };
 
         let lua = runtime.lua();

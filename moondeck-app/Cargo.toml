@@ -13,6 +13,7 @@ anyhow.workspace = true
 log.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+embedded-svc.workspace = true
 esp-idf-sys.workspace = true
 esp-idf-svc.workspace = true
 esp-idf-hal.workspace = true

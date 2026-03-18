@@ -20,6 +20,9 @@ log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
 
+# Embedded services
+embedded-svc = "0.28"
+
 # Graphics
 embedded-graphics = "0.8"
 embedded-graphics-core = "0.4"

@@ -6,5 +6,5 @@ pub use bindings::{
     get_default_theme, init_boot_time, set_current_theme, set_system_info, set_wifi_status,
     DrawCommand, ThemeAccessor as ThemeColors,
 };
-pub use plugin::WidgetPlugin;
-pub use runtime::LuaRuntime;
+pub use plugin::{embedded_widget_sources, WidgetPlugin};
+pub use runtime::{LuaRuntime, EMBEDDED_INIT_LUA, EMBEDDED_PAGES_LUA};

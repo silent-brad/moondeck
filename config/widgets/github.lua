@@ -122,7 +122,7 @@ function M.render(state, gfx)
   end
 
   -- Generate gradient
-  local base = th.accent_secondary
+  local base = th.accent_error
   local target = th.accent_success
   local heat_colors = {
     mix(base, base, 0), -- 0 contributions (base color)
