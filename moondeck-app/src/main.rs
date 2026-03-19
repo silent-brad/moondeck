@@ -1,22 +1,27 @@
-use anyhow::{Context, Result};
-use embedded_svc::http::Method;
-use embedded_svc::io::Write;
-use esp_idf_hal::delay::FreeRtos;
-use esp_idf_hal::gpio::AnyOutputPin;
-use esp_idf_hal::peripherals::Peripherals;
-use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::http::server::{Configuration as HttpServerConfig, EspHttpServer};
-use esp_idf_svc::log::EspLogger;
-use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use log::*;
-use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::{
+    sync::{
+        atomic::{AtomicU32, Ordering},
+        Arc,
+    },
+    time::{SystemTime, UNIX_EPOCH},
+};
 
-use moondeck_core::gfx::{Color, DrawContext, DISPLAY_HEIGHT, DISPLAY_WIDTH};
-use moondeck_core::ui::{Event, Gesture, PageManager, WidgetInstance};
-use moondeck_core::util::FrameTimer;
-use moondeck_core::TtfFont;
+use anyhow::{Context, Result};
+use embedded_svc::{http::Method, io::Write};
+use esp_idf_hal::{delay::FreeRtos, gpio::AnyOutputPin, peripherals::Peripherals};
+use esp_idf_svc::{
+    eventloop::EspSystemEventLoop,
+    http::server::{Configuration as HttpServerConfig, EspHttpServer},
+    log::EspLogger,
+    nvs::EspDefaultNvsPartition,
+};
+use log::*;
+use moondeck_core::{
+    gfx::{Color, DrawContext, DISPLAY_HEIGHT, DISPLAY_WIDTH},
+    ui::{Event, Gesture, PageManager, WidgetInstance},
+    util::FrameTimer,
+    TtfFont,
+};
 use moondeck_hal::{
     Display, EnvConfig, FileSystem, Framebuffer, GestureProcessor, TouchController, WifiManager,
 };
@@ -37,7 +42,8 @@ fn now_ms() -> u64 {
 fn seed_lua_config(fs: &FileSystem) {
     let _ = fs.create_dir("config");
 
-    // Only seed user-editable entry points; everything else is embedded in the binary
+    // Only seed user-editable entry points; everything else is embedded in the
+    // binary
     if !fs.exists("config/pages.lua") {
         if let Err(e) = fs.write_file("config/pages.lua", EMBEDDED_PAGES_LUA) {
             warn!("Failed to seed pages.lua: {}", e);

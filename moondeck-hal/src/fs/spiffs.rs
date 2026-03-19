@@ -1,8 +1,7 @@
+use std::{ffi::CString, fs, path::Path};
+
 use anyhow::{Context, Result};
 use esp_idf_sys as sys;
-use std::ffi::CString;
-use std::fs;
-use std::path::Path;
 
 pub struct FileSystem {
     mount_point: String,

@@ -1,9 +1,12 @@
+use std::{
+    collections::HashMap,
+    sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
+};
+
 use anyhow::Result;
 use moondeck_hal::EnvConfig;
 use piccolo::{Callback, CallbackReturn, Lua, String as LuaString, Table, Value};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 // Global state using macro
 define_state! {
@@ -106,7 +109,8 @@ pub fn register_device(lua: &mut Lua) -> Result<()> {
             as i64);
         lua_getter!(device_table, ctx, "cpu_freq", CPU_FREQ, |v: &u32| *v as i64);
 
-        // device.localtime() -> table { hour, min, sec, year, month, day, weekday, yearday }
+        // device.localtime() -> table { hour, min, sec, year, month, day, weekday,
+        // yearday }
         device_table.set(
             ctx,
             "localtime",

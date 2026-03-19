@@ -1,7 +1,8 @@
+use std::sync::{Arc, Mutex};
+
 use anyhow::Result;
 use moondeck_core::gfx::Color;
 use piccolo::{Lua, Table, Value};
-use std::sync::{Arc, Mutex};
 
 #[derive(Clone, Debug)]
 pub enum DrawCommand {

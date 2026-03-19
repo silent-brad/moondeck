@@ -1,12 +1,16 @@
-use crate::bindings::{get_draw_commands, lua_serde::json_to_lua, set_draw_offset, DrawCommand};
-use crate::LuaRuntime;
 use anyhow::{Context, Result};
-use embedded_graphics::pixelcolor::Rgb565;
-use embedded_graphics::prelude::DrawTarget;
-use moondeck_core::gfx::DrawContext;
-use moondeck_core::ui::{Event, Gesture, WidgetContext};
-use moondeck_core::TtfFont;
+use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
+use moondeck_core::{
+    gfx::DrawContext,
+    ui::{Event, Gesture, WidgetContext},
+    TtfFont,
+};
 use piccolo::{Closure, Executor, Fuel, StashedTable, Table, Value};
+
+use crate::{
+    bindings::{get_draw_commands, lua_serde::json_to_lua, set_draw_offset, DrawCommand},
+    LuaRuntime,
+};
 
 pub fn embedded_widget_sources() -> &'static [(&'static str, &'static str)] {
     crate::bindings::embedded_lua_modules()

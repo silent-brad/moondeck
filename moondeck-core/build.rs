@@ -1,9 +1,11 @@
-use std::collections::{BTreeMap, BTreeSet};
-use std::fs;
-use std::path::Path;
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    fs,
+    path::Path,
+};
 
 const SIZES: [u32; 4] = [14, 18, 24, 32];
-const LARGE_SIZES: [u32; 1] = [80];
+const LARGE_SIZES: [u32; 2] = [42, 80];
 const LARGE_FONT_FAMILY: &str = "EBGaramond";
 const LARGE_FONT_WEIGHT: &str = "Regular";
 const CHAR_START: u8 = 32;
@@ -158,7 +160,8 @@ impl BitmapFont {
             .unwrap_or_else(|_| panic!("Failed to read font: {}", variant.path));
         let font = rusttype::Font::try_from_vec(font_data).expect("Failed to parse font");
 
-        let is_large_variant = variant.family == LARGE_FONT_FAMILY && variant.weight == LARGE_FONT_WEIGHT;
+        let is_large_variant =
+            variant.family == LARGE_FONT_FAMILY && variant.weight == LARGE_FONT_WEIGHT;
         let all_sizes: Vec<u32> = if is_large_variant {
             SIZES.iter().chain(LARGE_SIZES.iter()).copied().collect()
         } else {
@@ -254,13 +257,15 @@ impl BitmapFont {
     code.push_str("        0..=15 => 14,\n");
     code.push_str("        16..=20 => 18,\n");
     code.push_str("        21..=27 => 24,\n");
-    code.push_str("        28..=55 => 32,\n");
+    code.push_str("        28..=36 => 32,\n");
+    code.push_str("        37..=60 => 42,\n");
     code.push_str("        _ => 80,\n");
     code.push_str("    };\n");
     code.push_str("    match (family, weight, style, nearest_size) {\n");
 
     for variant in variants {
-        let is_large_variant = variant.family == LARGE_FONT_FAMILY && variant.weight == LARGE_FONT_WEIGHT;
+        let is_large_variant =
+            variant.family == LARGE_FONT_FAMILY && variant.weight == LARGE_FONT_WEIGHT;
         let variant_sizes: Vec<u32> = if is_large_variant {
             SIZES.iter().chain(LARGE_SIZES.iter()).copied().collect()
         } else {

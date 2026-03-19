@@ -24,7 +24,7 @@ local function two_digit(s, pos)
   return hi * 10 + lo
 end
 
--- Format "2026-03-18T12:34:56Z" to "Mar 18"
+-- Format "2026-03-18T12:34:56Z" to "Mar 18 9:01 PM"
 function M.short_date(iso)
   if not iso then
     return ""
@@ -55,7 +55,29 @@ function M.short_date(iso)
   if string.sub(d, 1, 1) == "0" then
     d = string.sub(d, 2, 2)
   end
-  return months[m] .. " " .. d
+  local result = months[m] .. " " .. d
+
+  -- Append time if available (format: "...T12:34:56Z")
+  if #iso >= 16 then
+    local hour = two_digit(iso, 12)
+    local min = two_digit(iso, 15)
+    local ampm = "AM"
+    if hour >= 12 then
+      ampm = "PM"
+    end
+    if hour == 0 then
+      hour = 12
+    elseif hour > 12 then
+      hour = hour - 12
+    end
+    local min_str = tostring(min)
+    if min < 10 then
+      min_str = "0" .. min_str
+    end
+    result = result .. " " .. tostring(hour) .. ":" .. min_str .. " " .. ampm
+  end
+
+  return result
 end
 
 -- Extract first line from a commit message

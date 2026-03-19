@@ -4,13 +4,13 @@ pub mod http;
 pub mod touch;
 pub mod wifi;
 
+use std::collections::HashMap;
+
 pub use display::{Display, Framebuffer};
 pub use fs::FileSystem;
 pub use http::HttpClient;
 pub use touch::{GestureProcessor, TouchController};
 pub use wifi::WifiManager;
-
-use std::collections::HashMap;
 
 pub struct EnvConfig {
     vars: HashMap<String, String>,

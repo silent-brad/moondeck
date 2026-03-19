@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
+use std::{collections::HashMap, fs, path::Path};
 
 fn main() {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
@@ -58,8 +56,9 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
         }
     }
 
-    // Scan utils/ — init.lua becomes "utils", other .lua files become "utils.<stem>"
-    // Sort so init.lua comes AFTER other files (its code may require sibling modules)
+    // Scan utils/ — init.lua becomes "utils", other .lua files become
+    // "utils.<stem>" Sort so init.lua comes AFTER other files (its code may
+    // require sibling modules)
     let utils_dir = config_dir.join("utils");
     if let Ok(files) = fs::read_dir(&utils_dir) {
         let mut files: Vec<_> = files.filter_map(|e| e.ok()).collect();
@@ -103,7 +102,8 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
 
 fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
     let themes_dir = Path::new(manifest_dir).join("../config/themes");
-    // Read the themes/init.lua for default theme, and individual theme files for colors
+    // Read the themes/init.lua for default theme, and individual theme files for
+    // colors
     let init_path = themes_dir.join("init.lua");
     let init_content = fs::read_to_string(&init_path).expect("Failed to read themes/init.lua");
 
@@ -121,7 +121,12 @@ fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
         theme_files.sort_by_key(|e| e.path());
 
         for entry in theme_files {
-            let name = entry.path().file_stem().unwrap().to_string_lossy().to_string();
+            let name = entry
+                .path()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
             let theme_src = fs::read_to_string(entry.path()).unwrap();
             // Wrap in themes.NAME = { ... } format for the parser
             content.push_str(&format!("themes.{} = {{\n", name));

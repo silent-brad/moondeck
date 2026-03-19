@@ -1,9 +1,11 @@
 use anyhow::{Context, Result};
-use esp_idf_hal::delay::FreeRtos;
-use esp_idf_hal::gpio::*;
-use esp_idf_hal::i2c::{I2c, I2cConfig, I2cDriver};
-use esp_idf_hal::peripheral::Peripheral;
-use esp_idf_hal::units::Hertz;
+use esp_idf_hal::{
+    delay::FreeRtos,
+    gpio::*,
+    i2c::{I2c, I2cConfig, I2cDriver},
+    peripheral::Peripheral,
+    units::Hertz,
+};
 use moondeck_core::ui::{TouchEvent, TouchPhase};
 
 const GT911_ADDR_PRIMARY: u8 = 0x5D;

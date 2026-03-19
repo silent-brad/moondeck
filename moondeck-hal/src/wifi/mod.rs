@@ -1,11 +1,13 @@
+use std::{net::Ipv4Addr, time::Duration};
+
 use anyhow::{Context, Result};
 use esp_idf_hal::modem::Modem;
-use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::nvs::EspDefaultNvsPartition;
-use esp_idf_svc::sntp::{EspSntp, SntpConf, SyncStatus};
-use esp_idf_svc::wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi};
-use std::net::Ipv4Addr;
-use std::time::Duration;
+use esp_idf_svc::{
+    eventloop::EspSystemEventLoop,
+    nvs::EspDefaultNvsPartition,
+    sntp::{EspSntp, SntpConf, SyncStatus},
+    wifi::{AuthMethod, BlockingWifi, ClientConfiguration, Configuration, EspWifi},
+};
 
 pub struct WifiStatus {
     pub connected: bool,

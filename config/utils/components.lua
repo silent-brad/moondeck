@@ -51,24 +51,24 @@ function Components.title_bar(gfx, x, y, w, title, opts)
   opts = opts or {}
   local th = theme:get()
 
-  local color = opts.color or th.text_primary or "#ffffff"
-  local accent = opts.accent or th.accent_primary or "#00d4ff"
+  local color = opts.color or th.text_primary
+  local accent = opts.accent or th.accent_primary
   local font_family = opts.font_family or "ebgaramond"
-  local font_size = opts.font_size or 24
+  local font_size = opts.font_size or 32
   local show_line = opts.show_line ~= false
 
   -- Draw title
   if gfx.text then
-    gfx:text(x, y + 20, title, color, font_family, font_size)
+    gfx:text(x, y, title, color, font_family, font_size)
   end
 
   -- Draw accent line
   if show_line and gfx.line then
-    local line_y = y + 48
+    local line_y = y + 36
     gfx:line(x, line_y, x + w, line_y, accent, 2)
   end
 
-  return 35 -- Return height consumed
+  return 34 -- Return height consumed
 end
 
 -- Value display: large number with label

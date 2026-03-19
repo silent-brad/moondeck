@@ -1,9 +1,9 @@
-use super::Framebuffer;
 use anyhow::{Context, Result};
-use esp_idf_hal::gpio::*;
-use esp_idf_hal::peripheral::Peripheral;
+use esp_idf_hal::{gpio::*, peripheral::Peripheral};
 use esp_idf_sys as sys;
 use moondeck_core::gfx::{DISPLAY_HEIGHT, DISPLAY_WIDTH};
+
+use super::Framebuffer;
 
 pub struct DisplayConfig {
     pub hsync_pulse_width: u32,

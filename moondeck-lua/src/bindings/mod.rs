@@ -7,9 +7,6 @@ mod net;
 mod system;
 
 use anyhow::Result;
-use moondeck_hal::EnvConfig;
-use piccolo::Lua;
-
 pub use gfx::{
     get_draw_commands, get_draw_offset, register_gfx, set_draw_offset, DrawCommand, LuaDrawCommands,
 };
@@ -17,7 +14,9 @@ pub use modules::{
     embedded_lua_modules, get_current_theme, get_default_theme, get_theme_bg_primary,
     register_modules, set_current_theme, ThemeAccessor,
 };
+use moondeck_hal::EnvConfig;
 pub use net::register_net;
+use piccolo::Lua;
 pub use system::{
     init_boot_time, register_device, register_env, register_util, set_system_info,
     set_timezone_offset, set_wifi_status,

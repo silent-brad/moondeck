@@ -86,14 +86,11 @@ function M.render(state, gfx)
   -- Draw card
   components.card(gfx, 0, 0, state.width, state.height)
 
-  -- Decorative cross icon (simple)
-  gfx:line(px + 5, py + 5, px + 5, py + 20, th.accent_primary, 2)
-  gfx:line(px, py + 10, px + 10, py + 10, th.accent_primary, 2)
+  local title_h = components.title_bar(gfx, px, py, state.width - px * 2, "Daily Verse", {
+    accent = th.accent_primary,
+  })
 
-  -- Title
-  gfx:text(px + 20, py + 5, "Daily Verse", th.text_muted, "inter", 12)
-
-  local content_y = py + 35
+  local content_y = py + title_h + 25
 
   if state.loading then
     components.loading(gfx, px, content_y + 20)

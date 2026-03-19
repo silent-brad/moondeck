@@ -23,8 +23,8 @@ macro_rules! set_theme_fields {
     };
 }
 
-/// Macro for registering simple Lua getter callbacks that read from a static RwLock.
-/// Reduces boilerplate for callbacks that just return a value.
+/// Macro for registering simple Lua getter callbacks that read from a static
+/// RwLock. Reduces boilerplate for callbacks that just return a value.
 ///
 /// Usage:
 /// ```ignore
@@ -46,7 +46,8 @@ macro_rules! lua_getter {
     };
 }
 
-/// Macro for registering Lua callbacks that return an interned string from a static RwLock<String>.
+/// Macro for registering Lua callbacks that return an interned string from a
+/// static RwLock<String>.
 #[macro_export]
 macro_rules! lua_getter_string {
     ($table:expr, $ctx:expr, $name:expr, $static:expr) => {
@@ -77,8 +78,9 @@ macro_rules! lua_getter_string {
     };
 }
 
-/// Macro for registering a simple no-arg Lua callback that computes and returns a value.
-/// The body expression should return something convertible to a Lua Value.
+/// Macro for registering a simple no-arg Lua callback that computes and returns
+/// a value. The body expression should return something convertible to a Lua
+/// Value.
 ///
 /// Usage:
 /// ```ignore

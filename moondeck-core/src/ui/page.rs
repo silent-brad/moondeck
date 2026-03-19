@@ -1,5 +1,6 @@
-use super::{Event, Gesture, WidgetInstance};
 use serde::{Deserialize, Serialize};
+
+use super::{Event, Gesture, WidgetInstance};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Page {

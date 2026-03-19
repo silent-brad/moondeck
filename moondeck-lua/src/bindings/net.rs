@@ -1,7 +1,9 @@
-use super::lua_serde::{json_to_lua, lua_to_json, parse_headers, parse_timeout};
+use std::collections::HashMap;
+
 use anyhow::Result;
 use piccolo::{Callback, CallbackReturn, Lua, String as LuaString, Table, Value};
-use std::collections::HashMap;
+
+use super::lua_serde::{json_to_lua, lua_to_json, parse_headers, parse_timeout};
 
 pub fn register_net(lua: &mut Lua) -> Result<()> {
     lua.try_enter(|ctx| {
@@ -23,7 +25,8 @@ pub fn register_net(lua: &mut Lua) -> Result<()> {
             }),
         )?;
 
-        // net.http_post(url, body, content_type?, headers?, timeout_ms?) -> { ok, body, error?, status }
+        // net.http_post(url, body, content_type?, headers?, timeout_ms?) -> { ok, body,
+        // error?, status }
         net.set(
             ctx,
             "http_post",

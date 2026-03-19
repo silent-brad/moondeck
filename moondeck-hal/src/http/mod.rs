@@ -1,8 +1,11 @@
-use anyhow::{Context, Result};
-use esp_idf_svc::http::client::{Configuration as HttpConfig, EspHttpConnection};
-use esp_idf_svc::io::Write;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
+use anyhow::{Context, Result};
+use esp_idf_svc::{
+    http::client::{Configuration as HttpConfig, EspHttpConnection},
+    io::Write,
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpResponse {

@@ -1,6 +1,3 @@
-use super::bitmap_font::get_bitmap_font;
-use super::ttf_font::TtfFont;
-use super::{Color, Font};
 use embedded_graphics::{
     mono_font::{ascii::*, MonoTextStyle},
     pixelcolor::Rgb565,
@@ -8,6 +5,8 @@ use embedded_graphics::{
     primitives::{Circle, Line, PrimitiveStyle, Rectangle, RoundedRectangle},
     text::Text,
 };
+
+use super::{bitmap_font::get_bitmap_font, ttf_font::TtfFont, Color, Font};
 
 pub const DISPLAY_WIDTH: u32 = 800;
 pub const DISPLAY_HEIGHT: u32 = 480;

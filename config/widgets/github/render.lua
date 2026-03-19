@@ -43,12 +43,18 @@ local function render_heatmap(gfx, state, th, px, grid_y, available_w, available
   local legend_y = grid_y + 7 * (cell + gap) + 4
   local py = 15
   if legend_y + 10 < state.height - py then
-    gfx:text(px, legend_y, "Less", th.text_muted, "inter", 12)
+    local text_h = 12
+    local block_row_h = cell
+    local row_center = math.max(text_h, block_row_h)
+    local text_offset = math.floor((row_center - text_h) / 2)
+    local block_offset = math.floor((row_center - block_row_h) / 2)
+
+    gfx:text(px, legend_y + text_offset, "Less", th.text_muted, "inter", 12)
     local lx = px + 30
     for i = 1, #heat_colors do
-      gfx:fill_rounded_rect(lx + (i - 1) * (cell + gap), legend_y, cell, cell, 0, heat_colors[i])
+      gfx:fill_rounded_rect(lx + (i - 1) * (cell + gap), legend_y + block_offset, cell, cell, 0, heat_colors[i])
     end
-    gfx:text(lx + 5 * (cell + gap) + 4, legend_y, "More", th.text_muted, "inter", 12)
+    gfx:text(lx + 5 * (cell + gap) + 4, legend_y + text_offset, "More", th.text_muted, "inter", 12)
   end
 
   return legend_y + 20
@@ -59,8 +65,12 @@ local function render_repos(gfx, state, th, px, repo_y, repo_w)
     return
   end
 
+  -- Title
+  gfx:text(px, repo_y, "Recent Repositories", th.text_muted, "inter", 12)
+  repo_y = repo_y + 16
+
   local py = 15
-  local repo_h = 58
+  local repo_h = 70
 
   for i = 1, state.repo_count do
     if repo_y + repo_h > state.height - py then
@@ -104,34 +114,39 @@ local function render_repos(gfx, state, th, px, repo_y, repo_w)
 
       local cx = px
       local label_y = bar_y + bar_h + 4
-      local lx = px
-      local labels_drawn = 0
 
       local ln_names = state.repo_lang_names[i] or {}
       local ln_pcts = state.repo_lang_pcts[i] or {}
       local ln_colors = state.repo_lang_colors[i] or {}
 
+      -- Draw bar segments and labels at bar start positions
+      local seg_positions = {}
       for k = 1, lcount do
-        local ln = ln_names[k] or ""
         local lpct = ln_pcts[k] or 0
         local lclr = ln_colors[k] or th.text_muted
-
         local seg_w = math.floor(bar_w * lpct / 100)
         if seg_w > 0 then
+          seg_positions[#seg_positions + 1] = { x = cx, name = ln_names[k] or "", pct = lpct, color = lclr }
           gfx:fill_rounded_rect(cx, bar_y, seg_w - 1, bar_h, 1, lclr)
-
-          if seg_w > 30 and labels_drawn < 2 and lx < px + bar_w - 30 then
-            local lbl = ln .. " " .. tostring(lpct) .. "%"
-            if #lbl > 14 then
-              lbl = string.sub(ln, 1, 10) .. ".."
-            end
-            gfx:text(lx, label_y, lbl, lclr, "inter", 12)
-            lx = lx + #lbl * 6 + 10
-            labels_drawn = labels_drawn + 1
-          end
-
           cx = cx + seg_w
         end
+      end
+
+      local labels_drawn = 0
+      for k = 1, #seg_positions do
+        if labels_drawn >= 2 then
+          break
+        end
+        local sp = seg_positions[k]
+        local name_str = sp.name
+        if #name_str > 10 then
+          name_str = string.sub(name_str, 1, 10) .. ".."
+        end
+        local pct_str = tostring(sp.pct) .. "%"
+        local lbl_x = sp.x
+        gfx:fill_circle(lbl_x + 4, label_y + 6, 3, sp.color)
+        gfx:text(lbl_x + 12, label_y, name_str .. " " .. pct_str, th.text_primary, "inter", 12)
+        labels_drawn = labels_drawn + 1
       end
     end
 
@@ -153,7 +168,7 @@ local function render_languages(gfx, state, th, right_x, right_w, section_y)
     local lpct = state.lang_pcts[i] or 0
     local dot_color = colors.get_lang_color(lname) or th.text_muted
 
-    gfx:fill_circle(right_x + 4, section_y + 5, 3, dot_color)
+    gfx:fill_circle(right_x + 4, section_y + 7, 3, dot_color)
     gfx:text(right_x + 14, section_y, lname, th.text_primary, "inter", 12)
 
     local pct_str = tostring(lpct) .. "%"
@@ -172,10 +187,10 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
   end
 
   gfx:text(right_x, section_y, "Recent Commits", th.text_muted, "inter", 12)
-  section_y = section_y + 16
+  section_y = section_y + 18
 
   local py = 15
-  local commit_row_h = 38
+  local commit_row_h = 50
   local max_commits = math.floor((state.height - section_y - py) / commit_row_h)
 
   for i = 1, state.commit_count do
@@ -191,7 +206,7 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
 
     -- Language dot + repo · date
     local lang_clr = colors.get_lang_color(lang) or th.text_muted
-    gfx:fill_circle(right_x + 4, section_y + 5, 3, lang_clr)
+    gfx:fill_circle(right_x + 4, section_y + 7, 3, lang_clr)
 
     local header = r .. " · " .. fetch_mod.short_date(d)
     gfx:text(right_x + 14, section_y, header, th.text_muted, "inter", 12)
@@ -202,12 +217,34 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
     end
     gfx:text(right_x + 14, section_y + 13, m, th.text_primary, "inter", 12)
 
-    -- Lines changed + language name
-    local detail = l
-    if #lang > 0 then
-      detail = l .. " · " .. lang
+    -- Lines changed (colored) + language name
+    local adds = ""
+    local dels = ""
+
+    -- Parse additions and deletions from l (format: "+N -N")
+    local plus_end = 0
+    for ci = 2, #l do
+      if string.sub(l, ci, ci) == " " then
+        plus_end = ci - 1
+        break
+      end
     end
-    gfx:text(right_x + 14, section_y + 25, detail, th.text_muted, "inter", 12)
+    if plus_end > 0 then
+      adds = string.sub(l, 1, plus_end)
+      dels = string.sub(l, plus_end + 2)
+    else
+      adds = l
+    end
+
+    local loc_x = right_x + 14
+    gfx:text(loc_x, section_y + 25, adds, th.accent_success, "inter", 12)
+    loc_x = loc_x + #adds * 6 + 4
+    gfx:text(loc_x, section_y + 25, dels, th.accent_error, "inter", 12)
+
+    if #lang > 0 then
+      loc_x = loc_x + #dels * 6 + 4
+      gfx:text(loc_x, section_y + 25, "· " .. lang, th.text_muted, "inter", 12)
+    end
 
     section_y = section_y + commit_row_h
   end

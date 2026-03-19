@@ -1,8 +1,9 @@
-use crate::bindings::{self, lua_serde::table_to_json};
 use anyhow::{Context, Result};
 use moondeck_core::ui::{Page, WidgetInstance};
 use moondeck_hal::EnvConfig;
 use piccolo::{Closure, Executor, Fuel, Lua, StashedExecutor, Value};
+
+use crate::bindings::{self, lua_serde::table_to_json};
 
 pub const EMBEDDED_PAGES_LUA: &str = include_str!("../../config/pages.lua");
 

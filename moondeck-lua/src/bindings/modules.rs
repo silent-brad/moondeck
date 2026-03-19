@@ -1,8 +1,9 @@
+use std::sync::RwLock;
+
 use anyhow::Result;
 use piccolo::{
     Callback, CallbackReturn, Closure, Executor, Lua, String as LuaString, Table, Value,
 };
-use std::sync::RwLock;
 
 include!(concat!(env!("OUT_DIR"), "/embedded_themes.rs"));
 include!(concat!(env!("OUT_DIR"), "/embedded_lua_modules.rs"));
@@ -23,7 +24,8 @@ pub fn get_theme_bg_primary() -> &'static str {
     get_theme(&CURRENT_THEME.read().unwrap()).bg_primary
 }
 
-/// Accessor struct for current theme colors (uses generated ThemeColors from build.rs)
+/// Accessor struct for current theme colors (uses generated ThemeColors from
+/// build.rs)
 pub struct ThemeAccessor;
 
 impl ThemeAccessor {
@@ -252,28 +254,23 @@ fn setup_require<'gc>(
                 }
                 _ => {
                     // Check cached modules first
-                    let cached = if let Value::Table(loaded) =
-                        ctx.globals().get(ctx, "__loaded_modules")
-                    {
-                        loaded.get(ctx, ctx.intern(name_str.as_bytes()))
-                    } else {
-                        Value::Nil
-                    };
+                    let cached =
+                        if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
+                            loaded.get(ctx, ctx.intern(name_str.as_bytes()))
+                        } else {
+                            Value::Nil
+                        };
 
                     if !matches!(cached, Value::Nil) {
                         cached
-                    } else if name_str.starts_with("widgets.")
-                        && name_str.matches('.').count() == 1
+                    } else if name_str.starts_with("widgets.") && name_str.matches('.').count() == 1
                     {
                         // Top-level widget module — create stub with _module tag
                         // so pages.lua serialization preserves the module name
                         let stub = Table::new(&ctx);
                         stub.set(ctx, "_module", ctx.intern(name_str.as_bytes()))?;
-                        if let Value::Table(loaded) =
-                            ctx.globals().get(ctx, "__loaded_modules")
-                        {
-                            let _ =
-                                loaded.set(ctx, ctx.intern(name_str.as_bytes()), stub);
+                        if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
+                            let _ = loaded.set(ctx, ctx.intern(name_str.as_bytes()), stub);
                         }
                         Value::Table(stub)
                     } else if let Some(src) = embedded_lua_modules()
@@ -283,11 +280,8 @@ fn setup_require<'gc>(
                     {
                         // Sub-module — load actual source
                         let module = load_lua_module(ctx, name_str, src)?;
-                        if let Value::Table(loaded) =
-                            ctx.globals().get(ctx, "__loaded_modules")
-                        {
-                            let _ =
-                                loaded.set(ctx, ctx.intern(name_str.as_bytes()), module);
+                        if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
+                            let _ = loaded.set(ctx, ctx.intern(name_str.as_bytes()), module);
                         }
                         module
                     } else {

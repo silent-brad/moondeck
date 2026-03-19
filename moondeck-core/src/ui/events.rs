@@ -96,7 +96,8 @@ impl GestureDetector {
                 self.start_y = None;
                 self.start_time = None;
 
-                // Use Ended event position directly (more reliable than tracked current position)
+                // Use Ended event position directly (more reliable than tracked current
+                // position)
                 let end_x = touch.x;
                 let end_y = touch.y;
 
