@@ -90,7 +90,7 @@ function M.render(state, gfx)
 
   -- SSID
   if state.wifi_connected and state.wifi_ssid ~= "" then
-    gfx:text(px + 14, content_y, "SSID: " .. state.wifi_ssid, th.text_muted, "small")
+    gfx:text(px + 14, content_y, "SSID: " .. state.wifi_ssid, th.text_muted, "inter", 12)
     content_y = content_y + 20
   end
 
@@ -110,8 +110,8 @@ function M.render(state, gfx)
 
   -- IP Address
   if state.wifi_connected then
-    gfx:text(px, content_y, "IP Address", th.text_muted, "small")
-    gfx:text(px, content_y + 14, state.ip_address, th.text_primary, "medium")
+    gfx:text(px, content_y, "IP Address", th.text_muted, "inter", 12)
+    gfx:text(px, content_y + 14, state.ip_address, th.text_primary, "inter", 16)
     content_y = content_y + 35
   end
 
@@ -120,8 +120,8 @@ function M.render(state, gfx)
   content_y = content_y + 15
 
   -- Uptime
-  gfx:text(px, content_y, "Uptime", th.text_muted, "small")
-  gfx:text(px, content_y + 14, format_uptime(state.uptime), th.text_primary, "medium")
+  gfx:text(px, content_y, "Uptime", th.text_muted, "inter", 12)
+  gfx:text(px, content_y + 14, format_uptime(state.uptime), th.text_primary, "inter", 16)
 end
 
 function M.on_event(state, event)

@@ -43,12 +43,12 @@ local function render_heatmap(gfx, state, th, px, grid_y, available_w, available
   local legend_y = grid_y + 7 * (cell + gap) + 4
   local py = 15
   if legend_y + 10 < state.height - py then
-    gfx:text(px, legend_y, "Less", th.text_muted, "small")
+    gfx:text(px, legend_y, "Less", th.text_muted, "inter", 12)
     local lx = px + 30
     for i = 1, #heat_colors do
       gfx:fill_rounded_rect(lx + (i - 1) * (cell + gap), legend_y, cell, cell, 0, heat_colors[i])
     end
-    gfx:text(lx + 5 * (cell + gap) + 4, legend_y, "More", th.text_muted, "small")
+    gfx:text(lx + 5 * (cell + gap) + 4, legend_y, "More", th.text_muted, "inter", 12)
   end
 
   return legend_y + 20
@@ -77,22 +77,22 @@ local function render_repos(gfx, state, th, px, repo_y, repo_w)
     end
 
     -- Name and visibility badge
-    gfx:text(px, repo_y, rname, th.text_accent, "small")
+    gfx:text(px, repo_y, rname, th.text_accent, "inter", 12)
     local vis_label = rvis == "PRIVATE" and "Private" or "Public"
     local vis_color = rvis == "PRIVATE" and th.accent_error or th.accent_success
     local vis_w = #vis_label * 6
-    gfx:text(px + repo_w - vis_w, repo_y, vis_label, vis_color, "small")
+    gfx:text(px + repo_w - vis_w, repo_y, vis_label, vis_color, "inter", 12)
 
     -- Description
     if #rdesc > 50 then
       rdesc = string.sub(rdesc, 1, 47) .. "..."
     end
-    gfx:text(px, repo_y + 14, rdesc, th.text_muted, "small")
+    gfx:text(px, repo_y + 14, rdesc, th.text_muted, "inter", 12)
 
     -- Pushed date
     local date_str = fetch_mod.short_date(rdate)
     if date_str ~= "" then
-      gfx:text(px + repo_w - (#date_str * 6), repo_y + 14, date_str, th.text_muted, "small")
+      gfx:text(px + repo_w - (#date_str * 6), repo_y + 14, date_str, th.text_muted, "inter", 12)
     end
 
     -- Language bar and labels
@@ -125,7 +125,7 @@ local function render_repos(gfx, state, th, px, repo_y, repo_w)
             if #lbl > 14 then
               lbl = string.sub(ln, 1, 10) .. ".."
             end
-            gfx:text(lx, label_y, lbl, lclr, "small")
+            gfx:text(lx, label_y, lbl, lclr, "inter", 12)
             lx = lx + #lbl * 6 + 10
             labels_drawn = labels_drawn + 1
           end
@@ -144,7 +144,7 @@ local function render_languages(gfx, state, th, right_x, right_w, section_y)
     return section_y
   end
 
-  gfx:text(right_x, section_y, "Languages", th.text_muted, "small")
+  gfx:text(right_x, section_y, "Languages", th.text_muted, "inter", 12)
   section_y = section_y + 16
 
   local max_langs = math.min(state.lang_count, 5)
@@ -154,11 +154,11 @@ local function render_languages(gfx, state, th, right_x, right_w, section_y)
     local dot_color = colors.get_lang_color(lname) or th.text_muted
 
     gfx:fill_circle(right_x + 4, section_y + 5, 3, dot_color)
-    gfx:text(right_x + 14, section_y, lname, th.text_primary, "small")
+    gfx:text(right_x + 14, section_y, lname, th.text_primary, "inter", 12)
 
     local pct_str = tostring(lpct) .. "%"
     local pct_w = #pct_str * 7
-    gfx:text(right_x + right_w - pct_w, section_y, pct_str, th.text_muted, "small")
+    gfx:text(right_x + right_w - pct_w, section_y, pct_str, th.text_muted, "inter", 12)
 
     section_y = section_y + 16
   end
@@ -171,7 +171,7 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
     return
   end
 
-  gfx:text(right_x, section_y, "Recent Commits", th.text_muted, "small")
+  gfx:text(right_x, section_y, "Recent Commits", th.text_muted, "inter", 12)
   section_y = section_y + 16
 
   local py = 15
@@ -194,20 +194,20 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
     gfx:fill_circle(right_x + 4, section_y + 5, 3, lang_clr)
 
     local header = r .. " · " .. fetch_mod.short_date(d)
-    gfx:text(right_x + 14, section_y, header, th.text_muted, "small")
+    gfx:text(right_x + 14, section_y, header, th.text_muted, "inter", 12)
 
     -- Commit message
     if #m > 35 then
       m = string.sub(m, 1, 32) .. "..."
     end
-    gfx:text(right_x + 14, section_y + 13, m, th.text_primary, "small")
+    gfx:text(right_x + 14, section_y + 13, m, th.text_primary, "inter", 12)
 
     -- Lines changed + language name
     local detail = l
     if #lang > 0 then
       detail = l .. " · " .. lang
     end
-    gfx:text(right_x + 14, section_y + 25, detail, th.text_muted, "small")
+    gfx:text(right_x + 14, section_y + 25, detail, th.text_muted, "inter", 12)
 
     section_y = section_y + commit_row_h
   end
@@ -246,8 +246,8 @@ function M.render(state, gfx)
   local right_w = state.width - right_x - px
 
   -- Left column: username + heatmap
-  gfx:text(px, cy, "@" .. state.username, th.text_accent, "medium")
-  gfx:text(px, cy + 18, tostring(state.total) .. " contributions", th.text_muted, "small")
+  gfx:text(px, cy, "@" .. state.username, th.text_accent, "inter", 16)
+  gfx:text(px, cy + 18, tostring(state.total) .. " contributions", th.text_muted, "inter", 12)
 
   local grid_y = cy + 38
   local available_w = left_w - px - 5

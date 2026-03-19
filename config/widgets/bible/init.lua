@@ -91,7 +91,7 @@ function M.render(state, gfx)
   gfx:line(px, py + 10, px + 10, py + 10, th.accent_primary, 2)
 
   -- Title
-  gfx:text(px + 20, py + 5, "Daily Verse", th.text_muted, "small")
+  gfx:text(px + 20, py + 5, "Daily Verse", th.text_muted, "inter", 12)
 
   local content_y = py + 35
 
@@ -118,15 +118,15 @@ function M.render(state, gfx)
     for i = 1, #lines do
       if i > max_lines then
         -- Show ellipsis on last line
-        gfx:text(px, content_y + (max_lines - 1) * line_height, "...", th.text_secondary, "medium")
+        gfx:text(px, content_y + (max_lines - 1) * line_height, "...", th.text_secondary, "inter", 16)
         break
       end
-      gfx:text(px, content_y + (i - 1) * line_height, lines[i], th.text_secondary, "medium")
+      gfx:text(px, content_y + (i - 1) * line_height, lines[i], th.text_secondary, "inter", 16)
     end
 
     -- Draw reference at bottom
     if state.verse_ref then
-      gfx:text(px, state.height - py - 15, "— " .. state.verse_ref, th.text_accent, "medium")
+      gfx:text(px, state.height - py - 15, "— " .. state.verse_ref, th.text_accent, "inter", 16)
     end
   end
 end

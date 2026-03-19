@@ -1,23 +1,43 @@
 -- Moondeck Component Library
 
+local color_util = require("utils.color")
+
 local Components = {}
 
--- Card component: rounded rectangle with border (uses theme defaults)
-function Components.card(gfx, x, y, w, h)
+-- Card component: rounded rectangle with shadow, transparency, and border
+-- opts (all optional):
+--   opacity   - card background opacity 0..1 (default 0.7)
+--   shadow    - shadow size in layers (default 3, 0 to disable)
+--   shadow_opacity - base shadow opacity per layer (default 0.08)
+function Components.card(gfx, x, y, w, h, opts)
   if not gfx then
     return
   end
 
+  opts = opts or {}
   local th = theme:get()
 
-  local bg = th.bg_card or "#16162a"
+  local bg_page = th.bg_primary or "#0a0a0f"
+  local bg_card = th.bg_card or "#16162a"
   local radius = th.card_radius or 12
   local border = th.border_primary or "#2a2a3e"
   local border_width = th.border_width or 1
+  local opacity = opts.opacity or 0.7
+  local shadow_layers = opts.shadow or 3
+  local shadow_opacity = opts.shadow_opacity or 0.08
 
-  -- Draw background
+  -- Draw shadow layers (larger rects behind the card, blended toward bg)
+  if shadow_layers > 0 and gfx.fill_rounded_rect then
+    for i = shadow_layers, 1, -1 do
+      local sc = color_util.blend(bg_page, "#000000", shadow_opacity * i)
+      gfx:fill_rounded_rect(x + i, y + i, w + i * 2, h + i * 2, radius + i, sc)
+    end
+  end
+
+  -- Draw card background (blended with page background for fake transparency)
   if gfx.fill_rounded_rect then
-    gfx:fill_rounded_rect(x, y, w, h, radius, bg)
+    local blended = color_util.blend(bg_page, bg_card, opacity)
+    gfx:fill_rounded_rect(x, y, w, h, radius, blended)
   end
 
   -- Draw border
@@ -33,12 +53,13 @@ function Components.title_bar(gfx, x, y, w, title, opts)
 
   local color = opts.color or th.text_primary or "#ffffff"
   local accent = opts.accent or th.accent_primary or "#00d4ff"
-  local font = opts.font or "large"
+  local font_family = opts.font_family or "ebgaramond"
+  local font_size = opts.font_size or 24
   local show_line = opts.show_line ~= false
 
   -- Draw title
   if gfx.text then
-    gfx:text(x, y + 20, title, color, font)
+    gfx:text(x, y + 20, title, color, font_family, font_size)
   end
 
   -- Draw accent line
@@ -57,16 +78,18 @@ function Components.value_display(gfx, x, y, value, label, opts)
 
   local value_color = opts.value_color or th.text_primary
   local label_color = opts.label_color or th.text_muted
-  local value_font = opts.value_font or "xlarge"
-  local label_font = opts.label_font or "small"
+  local value_font_family = opts.value_font_family or "inter"
+  local value_font_size = opts.value_font_size or 32
+  local label_font_family = opts.label_font_family or "inter"
+  local label_font_size = opts.label_font_size or 12
   local unit = opts.unit or ""
 
   -- Draw value
-  gfx:text(x, y, tostring(value) .. unit, value_color, value_font)
+  gfx:text(x, y, tostring(value) .. unit, value_color, value_font_family, value_font_size)
 
   -- Draw label below
   if label then
-    gfx:text(x, y + 28, label, label_color, label_font)
+    gfx:text(x, y + 28, label, label_color, label_font_family, label_font_size)
   end
 
   return 45 -- Return height consumed
@@ -80,7 +103,8 @@ function Components.item_row(gfx, x, y, w, label, value, opts)
   local label_color = opts.label_color or th.text_secondary
   local value_color = opts.value_color or th.text_primary
   local indicator_color = opts.indicator or nil
-  local font = opts.font or "medium"
+  local font_family = opts.font_family or "inter"
+  local font_size = opts.font_size or 16
 
   local text_x = x
 
@@ -91,12 +115,12 @@ function Components.item_row(gfx, x, y, w, label, value, opts)
   end
 
   -- Draw label
-  gfx:text(text_x, y, label, label_color, font)
+  gfx:text(text_x, y, label, label_color, font_family, font_size)
 
   -- Draw value (right-aligned)
   local value_str = tostring(value)
   local value_width = #value_str * 8 -- Approximate
-  gfx:text(x + w - value_width, y, value_str, value_color, font)
+  gfx:text(x + w - value_width, y, value_str, value_color, font_family, font_size)
 
   return 20 -- Return height consumed
 end
@@ -152,13 +176,14 @@ function Components.status(gfx, x, y, text, status, opts)
 
   local dot_color = colors[status] or th.text_muted
   local text_color = opts.text_color or th.text_secondary
-  local font = opts.font or "small"
+  local font_family = opts.font_family or "inter"
+  local font_size = opts.font_size or 12
 
   -- Draw status dot
   gfx:fill_circle(x + 4, y + 5, 4, dot_color)
 
   -- Draw text
-  gfx:text(x + 14, y, text, text_color, font)
+  gfx:text(x + 14, y, text, text_color, font_family, font_size)
 
   return 16 -- Return height consumed
 end
@@ -215,7 +240,7 @@ function Components.icon(gfx, x, y, size, letter, opts)
 
   local radius = size / 2
   gfx:fill_circle(x + radius, y + radius, radius, bg)
-  gfx:text(x + radius - 4, y + radius - 6, letter, fg, "medium")
+  gfx:text(x + radius - 4, y + radius - 6, letter, fg, "inter", 16)
 
   return size
 end
@@ -224,15 +249,15 @@ end
 function Components.loading(gfx, x, y, text)
   local th = theme:get()
   text = text or "Loading..."
-  gfx:text(x, y, text, th.text_muted, "medium")
+  gfx:text(x, y, text, th.text_muted, "inter", 16)
   return 20
 end
 
 -- Error display
 function Components.error(gfx, x, y, w, message)
   local th = theme:get()
-  gfx:text(x, y, "Error", th.accent_error, "medium")
-  gfx:text(x, y + 18, message or "Unknown error", th.text_muted, "small")
+  gfx:text(x, y, "Error", th.accent_error, "inter", 16)
+  gfx:text(x, y + 18, message or "Unknown error", th.text_muted, "inter", 12)
   return 40
 end
 

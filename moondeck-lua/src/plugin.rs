@@ -272,7 +272,6 @@ fn execute_draw_commands<T: DrawTarget<Color = Rgb565>>(
     ctx: &WidgetContext,
     draw_ctx: &mut DrawContext<'_, T>,
 ) {
-    use moondeck_core::gfx::Font;
     for cmd in commands {
         match cmd {
             DrawCommand::Clear { color } => {
@@ -314,13 +313,12 @@ fn execute_draw_commands<T: DrawTarget<Color = Rgb565>>(
                 y,
                 text,
                 color,
-                font,
+                family,
+                size,
             } => {
-                let ttf = match font {
-                    Font::Small => TtfFont::inter(12),
-                    Font::Medium => TtfFont::inter(16),
-                    Font::Large => TtfFont::inter(24),
-                    Font::XLarge => TtfFont::inter(32),
+                let ttf = match family.as_str() {
+                    "ebgaramond" | "garamond" => TtfFont::ebgaramond(size),
+                    _ => TtfFont::inter(size),
                 };
                 draw_ctx.text_ttf(x, y, &text, color, ttf);
             }

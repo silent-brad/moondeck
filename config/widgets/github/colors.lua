@@ -1,5 +1,7 @@
 -- GitHub Widget: Language colors and heatmap color helpers
 
+local color_util = require("utils.color")
+
 local M = {}
 
 -- GitHub language colors (integer RGB values)
@@ -45,62 +47,15 @@ function M.get_lang_color(name)
   return M.lang_colors[name]
 end
 
--- Hex color parsing and mixing
-
-local hex_digits = {
-  ["0"] = 0,
-  ["1"] = 1,
-  ["2"] = 2,
-  ["3"] = 3,
-  ["4"] = 4,
-  ["5"] = 5,
-  ["6"] = 6,
-  ["7"] = 7,
-  ["8"] = 8,
-  ["9"] = 9,
-  ["a"] = 10,
-  ["b"] = 11,
-  ["c"] = 12,
-  ["d"] = 13,
-  ["e"] = 14,
-  ["f"] = 15,
-  ["A"] = 10,
-  ["B"] = 11,
-  ["C"] = 12,
-  ["D"] = 13,
-  ["E"] = 14,
-  ["F"] = 15,
-}
-
-local function hex2(s, pos)
-  local hi = hex_digits[string.sub(s, pos, pos)] or 0
-  local lo = hex_digits[string.sub(s, pos + 1, pos + 1)] or 0
-  return hi * 16 + lo
-end
-
-local function hex_to_rgb(hex)
-  return { hex2(hex, 2), hex2(hex, 4), hex2(hex, 6) }
-end
-
-local function lerp(a, b, t)
-  return math.floor(a + (b - a) * t)
-end
-
-local function mix(c1, c2, t)
-  local a = hex_to_rgb(c1)
-  local b = hex_to_rgb(c2)
-  return lerp(a[1], b[1], t) * 65536 + lerp(a[2], b[2], t) * 256 + lerp(a[3], b[3], t)
-end
-
 function M.make_heat_colors(th)
   local base = th.accent_secondary
   local target = th.accent_success
   return {
-    mix(base, target, 0),
-    mix(base, target, 0.5),
-    mix(base, target, 0.75),
-    mix(base, target, 0.9),
-    mix(base, target, 1),
+    color_util.mix(base, target, 0),
+    color_util.mix(base, target, 0.5),
+    color_util.mix(base, target, 0.75),
+    color_util.mix(base, target, 0.9),
+    color_util.mix(base, target, 1),
   }
 end
 

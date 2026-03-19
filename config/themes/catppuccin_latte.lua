@@ -1,0 +1,21 @@
+-- Catppuccin Latte Theme
+return {
+  name = "catppuccin_latte",
+  bg_primary = "#eff1f5",
+  bg_secondary = "#e6e9ef",
+  bg_tertiary = "#dce0e8",
+  bg_card = "#eff1f5",
+  text_primary = "#4c4f69",
+  text_secondary = "#6c6f85",
+  text_muted = "#9ca0b0",
+  text_accent = "#1e66f5",
+  accent_primary = "#1e66f5",
+  accent_secondary = "#8839ef",
+  accent_success = "#40a02b",
+  accent_warning = "#df8e1d",
+  accent_error = "#d20f39",
+  border_primary = "#ccd0da",
+  border_accent = "#1e66f5",
+  card_radius = 12,
+  border_width = 1,
+}

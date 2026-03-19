@@ -66,17 +66,28 @@ moondeck-v2/
 ├── moondeck-hal/      # Hardware abstraction (display, touch, WiFi)
 ├── moondeck-lua/      # Lua runtime and widget system
 ├── config/            # Lua configuration files
-│   ├── init.lua       # Boot script
-│   ├── pages.lua      # Page definitions
-│   ├── layout.lua     # Layouts definitions
-│   ├── components.lua # Component library
-│   ├── theme.lua      # Theming
-│   └── widgets/       # Widget implementations
-│       ├── clock.lua
-│       ├── weather.lua
-│       ├── status.lua
-│       ├── quote.lua
-│       └── sysinfo.lua
+│   ├── pages.lua      # Page layouts and widget selection
+│   ├── themes/        # Color themes (dark, light, mint, rose_pine)
+│   ├── utils/         # Shared utilities
+│   │   ├── color.lua      # Color parsing and blending
+│   │   ├── components.lua # Component library (cards, titles, etc.)
+│   │   ├── layout.lua     # Layout system
+│   │   └── init.lua       # Initialization (loads theme, globals)
+│   └── widgets/       # Widget implementations (each in own dir)
+│       ├── bible/
+│       ├── clock/
+│       ├── crypto/
+│       ├── github/    # Multi-file widget example
+│       │   ├── colors.lua
+│       │   ├── fetch.lua
+│       │   ├── render.lua
+│       │   └── init.lua
+│       ├── quote/
+│       ├── rss/
+│       ├── status/
+│       ├── stocks/
+│       ├── sysinfo/
+│       └── weather/
 └── flake.nix          # Nix development environment
 #+end_src
 
@@ -84,31 +95,26 @@ moondeck-v2/
 
 Edit Lua widget files on your computer and push them to the device over WiFi — no re-flash needed. The device IP is shown on the display during boot.
 
-** Upload a Modified Widget
+** Deploy Changed Files
+
+Uploads only git-changed config files and triggers a reload:
 
 #+begin_src sh
-curl -X POST "http://<device-ip>/upload?path=config/widgets/clock.lua" --data-binary @config/widgets/clock.lua
+nu scripts/deploy.nu <device-ip>
 #+end_src
 
-** Upload Pages or Init Config
+** Deploy All Files
 
 #+begin_src sh
-curl -X POST "http://<device-ip>/upload?path=config/pages.lua" --data-binary @config/pages.lua
-curl -X POST "http://<device-ip>/upload?path=config/init.lua" --data-binary @config/init.lua
+nu scripts/deploy.nu <device-ip> --all
 #+end_src
 
-** Trigger Reload
+** Reload Only
 
-After uploading, tell the device to reload all Lua config:
-
-#+begin_src sh
-curl -X POST "http://<device-ip>/reload"
-#+end_src
-
-** One-Liner (Upload + Reload)
+Trigger a reload without uploading (e.g. after manual uploads):
 
 #+begin_src sh
-curl -X POST "http://<device-ip>/upload?path=config/widgets/clock.lua" --data-binary @config/widgets/clock.lua && curl -X POST "http://<device-ip>/reload"
+nu scripts/deploy.nu <device-ip> --reload
 #+end_src
 
 * Troubleshooting

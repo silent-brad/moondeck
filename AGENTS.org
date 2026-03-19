@@ -21,3 +21,4 @@ Rust workspace for ESP32-S3 color LCD cyberdeck with Lua widget system:
 - Use workspace dependencies from root Cargo.toml
 - Graphics via ~embedded-graphics~; colors as RGB565
 - Widgets are Lua modules with ~init/update/render/on_event~ callbacks
+- Only use Nushell, NOT BASH, except for in rare cases where it makes sense like in a Nix file

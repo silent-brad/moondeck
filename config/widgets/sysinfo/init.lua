@@ -95,18 +95,18 @@ function M.render(state, gfx)
   local col_width = (state.width - px * 2) / 2
 
   -- Uptime
-  gfx:text(px, content_y, "Uptime", th.text_muted, "small")
-  gfx:text(px, content_y + 14, format_uptime(state.uptime), th.text_primary, "medium")
+  gfx:text(px, content_y, "Uptime", th.text_muted, "inter", 12)
+  gfx:text(px, content_y + 14, format_uptime(state.uptime), th.text_primary, "inter", 16)
 
   -- CPU Frequency
-  gfx:text(px + col_width, content_y, "CPU", th.text_muted, "small")
-  gfx:text(px + col_width, content_y + 14, state.cpu_freq .. " MHz", th.text_primary, "medium")
+  gfx:text(px + col_width, content_y, "CPU", th.text_muted, "inter", 12)
+  gfx:text(px + col_width, content_y + 14, state.cpu_freq .. " MHz", th.text_primary, "inter", 16)
 
   content_y = content_y + row_height + 10
 
   -- Free Memory
-  gfx:text(px, content_y, "Free Memory", th.text_muted, "small")
-  gfx:text(px, content_y + 14, format_bytes(state.free_heap), th.text_primary, "medium")
+  gfx:text(px, content_y, "Free Memory", th.text_muted, "inter", 12)
+  gfx:text(px, content_y + 14, format_bytes(state.free_heap), th.text_primary, "inter", 16)
 
   -- Memory bar
   local mem_total = 400000 -- Approximate total heap
@@ -119,14 +119,14 @@ function M.render(state, gfx)
   })
 
   -- WiFi Signal
-  gfx:text(px + col_width, content_y, "WiFi Signal", th.text_muted, "small")
+  gfx:text(px + col_width, content_y, "WiFi Signal", th.text_muted, "inter", 12)
   local strength_text, strength_status = wifi_strength(state.wifi_rssi)
   gfx:text(
     px + col_width,
     content_y + 14,
     strength_text .. " (" .. state.wifi_rssi .. " dBm)",
     th.text_primary,
-    "medium"
+    "inter", 16
   )
 
   -- WiFi bar

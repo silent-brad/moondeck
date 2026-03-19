@@ -76,12 +76,12 @@ function M.render(state, gfx)
   end
 
   if not state.quote_text then
-    gfx:text(px, state.height / 2 - 10, "No quote available", th.text_muted, "medium")
+    gfx:text(px, state.height / 2 - 10, "No quote available", th.text_muted, "inter", 16)
     return
   end
 
   -- Opening quotation mark (decorative)
-  gfx:text(px - 5, content_y, '"', th.accent_primary, "xlarge")
+  gfx:text(px - 5, content_y, '"', th.accent_primary, "inter", 32)
 
   -- Calculate text layout
   local chars_per_line = math.floor((state.width - px * 2 - 20) / 8)
@@ -94,16 +94,16 @@ function M.render(state, gfx)
   -- Draw quote text
   for i = 1, #lines do
     if i > max_lines then
-      gfx:text(px + 15, text_start_y + (max_lines - 1) * line_height, "...", th.text_primary, "medium")
+      gfx:text(px + 15, text_start_y + (max_lines - 1) * line_height, "...", th.text_primary, "inter", 16)
       break
     end
-    gfx:text(px + 15, text_start_y + (i - 1) * line_height, lines[i], th.text_primary, "medium")
+    gfx:text(px + 15, text_start_y + (i - 1) * line_height, lines[i], th.text_primary, "inter", 16)
   end
 
   -- Author attribution
   if state.quote_author then
     local author_y = state.height - py - 15
-    gfx:text(px + 15, author_y, "— " .. state.quote_author, th.text_accent, "medium")
+    gfx:text(px + 15, author_y, "— " .. state.quote_author, th.text_accent, "inter", 16)
   end
 
   -- Subtle accent line

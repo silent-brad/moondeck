@@ -5,6 +5,7 @@ local themes = {
   light = require("themes.light"),
   mint = require("themes.mint"),
   rose_pine = require("themes.rose_pine"),
+  catppuccin_latte = require("themes.catppuccin_latte"),
 }
 
 -- Typography configuration
@@ -57,7 +58,7 @@ return {
   spacing = spacing,
   grid = grid,
   screen = screen,
-  current = "rose_pine",
+  current = env.get("THEME", "dark"),
 
   get = function(self)
     return self.themes[self.current] or self.themes.dark

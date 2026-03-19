@@ -23,7 +23,10 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
     // other files (its code may require sibling modules).
     let widgets_dir = config_dir.join("widgets");
     if let Ok(dirs) = fs::read_dir(&widgets_dir) {
-        let mut dirs: Vec<_> = dirs.filter_map(|e| e.ok()).filter(|e| e.path().is_dir()).collect();
+        let mut dirs: Vec<_> = dirs
+            .filter_map(|e| e.ok())
+            .filter(|e| e.path().is_dir())
+            .collect();
         dirs.sort_by_key(|e| e.path());
         for dir in dirs {
             let widget_name = dir.file_name().to_str().unwrap().to_string();
@@ -43,7 +46,11 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
                         } else {
                             format!("widgets.{}.{}", widget_name, stem)
                         };
-                        let abs = fs::canonicalize(&path).unwrap().display().to_string().replace('\\', "/");
+                        let abs = fs::canonicalize(&path)
+                            .unwrap()
+                            .display()
+                            .to_string()
+                            .replace('\\', "/");
                         entries.push((module, abs));
                     }
                 }
@@ -70,7 +77,11 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
                 } else {
                     format!("utils.{}", stem)
                 };
-                let abs = fs::canonicalize(&path).unwrap().display().to_string().replace('\\', "/");
+                let abs = fs::canonicalize(&path)
+                    .unwrap()
+                    .display()
+                    .to_string()
+                    .replace('\\', "/");
                 entries.push((module, abs));
             }
         }
@@ -78,7 +89,10 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
 
     let mut code = String::from("/// Auto-generated embedded Lua module sources\nconst EMBEDDED_LUA_MODULES: &[(&str, &str)] = &[\n");
     for (module, abs_path) in &entries {
-        code.push_str(&format!("    (\"{}\", include_str!(\"{}\")),\n", module, abs_path));
+        code.push_str(&format!(
+            "    (\"{}\", include_str!(\"{}\")),\n",
+            module, abs_path
+        ));
     }
     code.push_str("];\n");
 
@@ -93,21 +107,29 @@ fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
     let init_path = themes_dir.join("init.lua");
     let init_content = fs::read_to_string(&init_path).expect("Failed to read themes/init.lua");
 
-    // Concatenate all theme files so parse_themes can extract them
+    // Discover theme files dynamically from config/themes/
     let mut content = String::new();
-    for name in &["dark", "light", "mint", "rose_pine"] {
-        let path = themes_dir.join(format!("{}.lua", name));
-        if path.exists() {
-            let theme_src = fs::read_to_string(&path).unwrap();
+    if let Ok(entries) = fs::read_dir(&themes_dir) {
+        let mut theme_files: Vec<_> = entries
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                let path = e.path();
+                path.extension().map(|ext| ext == "lua").unwrap_or(false)
+                    && path.file_stem().map(|s| s != "init").unwrap_or(false)
+            })
+            .collect();
+        theme_files.sort_by_key(|e| e.path());
+
+        for entry in theme_files {
+            let name = entry.path().file_stem().unwrap().to_string_lossy().to_string();
+            let theme_src = fs::read_to_string(entry.path()).unwrap();
             // Wrap in themes.NAME = { ... } format for the parser
             content.push_str(&format!("themes.{} = {{\n", name));
             for line in theme_src.lines() {
                 let trimmed = line.trim();
-                // Skip return statement and theme-level comments
                 if trimmed.starts_with("return") || trimmed.starts_with("--") {
                     continue;
                 }
-                // Skip opening/closing braces from the return { ... }
                 if trimmed == "{" || trimmed == "}" {
                     continue;
                 }
@@ -290,5 +312,3 @@ fn parse_default_theme(content: &str) -> String {
     }
     "dark".to_string()
 }
-
-

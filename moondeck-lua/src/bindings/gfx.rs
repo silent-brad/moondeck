@@ -1,5 +1,5 @@
 use anyhow::Result;
-use moondeck_core::gfx::{Color, Font};
+use moondeck_core::gfx::Color;
 use piccolo::{Lua, Table, Value};
 use std::sync::{Arc, Mutex};
 
@@ -44,7 +44,8 @@ pub enum DrawCommand {
         y: i32,
         text: String,
         color: Color,
-        font: Font,
+        family: String,
+        size: u32,
     },
 }
 
@@ -118,16 +119,18 @@ fn color(val: Value) -> Color {
     }
 }
 
-fn font(val: Value) -> Font {
-    let name = match val {
-        Value::String(s) => s.to_str().unwrap_or("medium").to_lowercase(),
-        _ => "medium".to_string(),
-    };
-    match name.as_str() {
-        "small" => Font::Small,
-        "large" => Font::Large,
-        "xlarge" | "xxlarge" => Font::XLarge,
-        _ => Font::Medium,
+fn font_family(val: Value) -> String {
+    match val {
+        Value::String(s) => s.to_str().unwrap_or("inter").to_lowercase(),
+        _ => "inter".to_string(),
+    }
+}
+
+fn font_size(val: Value) -> u32 {
+    match val {
+        Value::Integer(i) => i.max(1) as u32,
+        Value::Number(n) => n.max(1.0) as u32,
+        _ => 16,
     }
 }
 
@@ -184,8 +187,9 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
         });
 
         // Text command
-        gfx_draw!(gfx, ctx, "text", (x, y, txt, c, f) => |ox, oy| DrawCommand::Text {
-            x: i32(x) + ox, y: i32(y) + oy, text: text_val(txt), color: color(c), font: font(f)
+        gfx_draw!(gfx, ctx, "text", (x, y, txt, c, fam, sz) => |ox, oy| DrawCommand::Text {
+            x: i32(x) + ox, y: i32(y) + oy, text: text_val(txt), color: color(c),
+            family: font_family(fam), size: font_size(sz)
         });
 
         // Clear command (no offset needed but macro requires it)

@@ -73,11 +73,11 @@ function M.render(state, gfx)
   local time_x = state.width / 2 - (#time_str * 14) / 2
   local time_y = state.height / 2 - 10
 
-  gfx:text(time_x, time_y, time_str, th.text_primary, "xlarge")
+  gfx:text(time_x, time_y, time_str, th.text_primary, "inter", 32)
 
   -- Draw AM/PM indicator
   if not state.format_24h then
-    gfx:text(time_x + #time_str * 14 + 10, time_y + 8, am_pm, th.text_muted, "medium")
+    gfx:text(time_x + #time_str * 14 + 10, time_y + 8, am_pm, th.text_muted, "inter", 16)
   end
 
   -- Draw date if enabled
@@ -87,7 +87,7 @@ function M.render(state, gfx)
     local date_str = weekday .. ", " .. month .. " " .. t.day .. ", " .. t.year
 
     local date_x = state.width / 2 - (#date_str * 4)
-    gfx:text(date_x, time_y + 40, date_str, th.text_muted, "medium")
+    gfx:text(date_x, time_y + 40, date_str, th.text_muted, "inter", 16)
   end
 
   -- Accent line at top
