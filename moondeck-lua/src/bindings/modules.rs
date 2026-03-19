@@ -262,11 +262,13 @@ fn setup_require<'gc>(
 
                     if !matches!(cached, Value::Nil) {
                         cached
-                    } else if name_str.starts_with("widgets.") {
-                        // Create a lightweight stub for widget modules
+                    } else if name_str.starts_with("widgets.")
+                        && name_str.matches('.').count() == 1
+                    {
+                        // Top-level widget module — create stub with _module tag
+                        // so pages.lua serialization preserves the module name
                         let stub = Table::new(&ctx);
                         stub.set(ctx, "_module", ctx.intern(name_str.as_bytes()))?;
-                        // Cache it
                         if let Value::Table(loaded) =
                             ctx.globals().get(ctx, "__loaded_modules")
                         {
@@ -274,6 +276,20 @@ fn setup_require<'gc>(
                                 loaded.set(ctx, ctx.intern(name_str.as_bytes()), stub);
                         }
                         Value::Table(stub)
+                    } else if let Some(src) = embedded_lua_modules()
+                        .iter()
+                        .find(|(n, _)| *n == name_str)
+                        .map(|(_, s)| *s)
+                    {
+                        // Sub-module — load actual source
+                        let module = load_lua_module(ctx, name_str, src)?;
+                        if let Value::Table(loaded) =
+                            ctx.globals().get(ctx, "__loaded_modules")
+                        {
+                            let _ =
+                                loaded.set(ctx, ctx.intern(name_str.as_bytes()), module);
+                        }
+                        module
                     } else {
                         Value::Nil
                     }

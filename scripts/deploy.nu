@@ -31,7 +31,7 @@ def main [
         print $"uploading ($path)"
         http post $"($base_url)/upload?path=($path)" (open --raw $path)
       }
-      print $"uploaded ($files | length) file(s)"
+      print $"uploaded ($files | length) file\(s)"
     }
   }
 

@@ -58,7 +58,7 @@ return {
   spacing = spacing,
   grid = grid,
   screen = screen,
-  current = env.get("THEME", "dark"),
+  current = env.get("THEME"),
 
   get = function(self)
     return self.themes[self.current] or self.themes.dark

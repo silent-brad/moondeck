@@ -22,6 +22,7 @@ local bible = require("widgets.bible")
 local rss = require("widgets.rss")
 local stocks = require("widgets.stocks")
 local github = require("widgets.github")
+local chess = require("widgets.chess")
 
 return {
   pages = {
@@ -62,17 +63,14 @@ return {
     {
       id = "dashboard",
       title = "Dashboard",
-      layout = "half_half",
+      layout = "header_two_col",
       widgets = {
         {
-          widget = clock,
+          widget = chess,
           slot = 1,
-          update_interval = 1000,
+          update_interval = 300000,
           opts = {
-            timezone = -4, -- EDT (Eastern Daylight Time)
-            show_seconds = true,
-            show_date = true,
-            format_24h = false,
+            username = env.get("CHESS_USERNAME"),
           },
         },
         {
@@ -80,6 +78,17 @@ return {
           slot = 2,
           update_interval = 1000,
           opts = {},
+        },
+        {
+          widget = clock,
+          slot = 3,
+          update_interval = 1000,
+          opts = {
+            timezone = env.get("TIMEZONE"),
+            show_seconds = true,
+            show_date = true,
+            format_24h = false,
+          },
         },
       },
     },

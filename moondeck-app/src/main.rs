@@ -129,6 +129,10 @@ fn start_http_server(reload_gen: Arc<AtomicU32>) -> Result<EspHttpServer<'static
 
         let full_path = format!("{}/{}", mount, path);
 
+        if let Some(parent) = std::path::Path::new(&full_path).parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+
         std::fs::write(&full_path, &body).map_err(|e| anyhow::anyhow!("Write failed: {}", e))?;
 
         info!("Uploaded: {} ({} bytes)", path, body.len());
