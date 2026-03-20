@@ -429,26 +429,13 @@ fn run_loop(
             last_page = pm.current_index();
         }
 
-        // Update only widgets on the current page
-        let active: Vec<usize> = if let Some(page) = pm.current_page() {
-            plugins
-                .iter()
-                .enumerate()
-                .filter(|(_, (_, widget))| {
-                    page.widgets.iter().any(|w| {
-                        w.module == widget.module
-                            && w.context.x == widget.context.x
-                            && w.context.y == widget.context.y
-                    })
-                })
-                .map(|(i, _)| i)
-                .collect()
-        } else {
-            Vec::new()
-        };
-        for i in &active {
+        // Update all widgets (not just the current page) so WiFi-dependent
+        // widgets on other pages can pre-fetch data in the background.
+        // Each widget's Lua-side update() already throttles via its own
+        // fetch_interval timer, so this doesn't cause extra API calls.
+        for i in 0..plugins.len() {
             poll_touch(touch, &mut gestures, pm);
-            let _ = plugins[*i].0.update(lua, delta);
+            let _ = plugins[i].0.update(lua, delta);
         }
         poll_touch(touch, &mut gestures, pm);
 
