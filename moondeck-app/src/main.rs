@@ -255,7 +255,7 @@ fn main() -> Result<()> {
         wifi,
         bg,
         fb,
-        &env,
+        &fs,
         &reload_gen,
     )
 }
@@ -370,7 +370,7 @@ fn run_loop(
     wifi: Option<WifiManager>,
     mut bg: Color,
     mut fb: Framebuffer,
-    env: &EnvConfig,
+    fs: &FileSystem,
     reload_gen: &AtomicU32,
 ) -> Result<()> {
     let mut timer = FrameTimer::new();
@@ -389,7 +389,11 @@ fn run_loop(
             last_reload = current_reload;
             info!("=== Reloading Lua config ===");
             draw_loading_screen(&mut fb, display, "Reloading...", None)?;
-            match init_lua_and_widgets(env) {
+            let env = load_env_config(Some(fs));
+            if let Some(theme) = env.get("THEME") {
+                set_current_theme(theme);
+            }
+            match init_lua_and_widgets(&env) {
                 Ok((new_lua, new_pm, new_plugins, new_bg)) => {
                     *lua = new_lua;
                     *pm = new_pm;
@@ -444,7 +448,7 @@ fn run_loop(
             let mut ctx = DrawContext::new(&mut fb);
             ctx.clear(bg);
             if let Some(page) = pm.current_page() {
-                let ui_color = Color::from_hex(ThemeColors::text_muted()).unwrap_or(Color::WHITE);
+                let _ui_color = Color::from_hex(ThemeColors::text_muted()).unwrap_or(Color::WHITE);
                 /*ctx.text_ttf(
                     10,
                     DISPLAY_HEIGHT as i32 - 20,
