@@ -102,7 +102,7 @@ function M.render(state, gfx)
 
   -- IP Address (compact)
   if state.wifi_connected then
-    gfx:text(px, content_y, "IP: " .. state.ip_address, th.text_primary, "inter", 12)
+    gfx:text(px, content_y, "IP: " .. state.ip_address, th.text_secondary, "inter", 12)
     content_y = content_y + 18
   end
 

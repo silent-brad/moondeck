@@ -15,8 +15,12 @@ local function render_elo_graph(gfx, state, th, x, y, w, h)
   -- Find min/max rating for scale
   local min_r, max_r = pts[1].rating, pts[1].rating
   for i = 2, n do
-    if pts[i].rating < min_r then min_r = pts[i].rating end
-    if pts[i].rating > max_r then max_r = pts[i].rating end
+    if pts[i].rating < min_r then
+      min_r = pts[i].rating
+    end
+    if pts[i].rating > max_r then
+      max_r = pts[i].rating
+    end
   end
 
   -- Add padding to range
@@ -106,10 +110,12 @@ function M.render(state, gfx)
     local r = state.ratings[i]
     local y = content_y + (i - 1) * row_height
 
-    if y + row_height > state.height - py then break end
+    if y + row_height > state.height - py then
+      break
+    end
 
     gfx:text(px, y, r.name, th.text_muted, "inter", 12)
-    gfx:text(px + 55, y, tostring(r.rating), th.text_primary, "inter", 16)
+    gfx:text(px + 55, y, tostring(r.rating), th.text_secondary, "inter", 16)
 
     if r.best then
       gfx:text(px + 120, y + 2, "pk " .. tostring(r.best), th.text_muted, "inter", 12)
@@ -129,19 +135,25 @@ function M.render(state, gfx)
   if state.recent_games and #state.recent_games > 0 then
     for i = 1, #state.recent_games do
       local g = state.recent_games[i]
-      if ry + 16 > state.height - py - 80 then break end
+      if ry + 16 > state.height - py - 80 then
+        break
+      end
 
       -- Result indicator
       local rc = th.text_muted
-      if g.result == "W" then rc = th.accent_success
-      elseif g.result == "L" then rc = th.accent_error
+      if g.result == "W" then
+        rc = th.accent_success
+      elseif g.result == "L" then
+        rc = th.accent_error
       end
       gfx:text(right_x, ry, g.result, rc, "inter", 12)
 
       -- Opponent and rating
       local opp = g.opponent
-      if #opp > 12 then opp = string.sub(opp, 1, 11) .. ".." end
-      gfx:text(right_x + 16, ry, opp, th.text_primary, "inter", 12)
+      if #opp > 12 then
+        opp = string.sub(opp, 1, 11) .. ".."
+      end
+      gfx:text(right_x + 16, ry, opp, th.text_secondary, "inter", 12)
 
       -- Ratings
       local info = tostring(g.rating)

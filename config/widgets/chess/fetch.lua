@@ -91,7 +91,9 @@ local function current_ym()
     m = m + 1
   end
   local ms = tostring(m)
-  if m < 10 then ms = "0" .. ms end
+  if m < 10 then
+    ms = "0" .. ms
+  end
   return tostring(y), ms
 end
 

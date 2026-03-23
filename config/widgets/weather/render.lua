@@ -30,7 +30,7 @@ function M.render(state, gfx)
   local temp_str = tostring(state.temperature) .. "°"
   local unit = state.units == "metric" and "C" or "F"
 
-  gfx:text(px, content_y + 15, temp_str, th.text_primary, "inter", 32)
+  gfx:text(px, content_y + 15, temp_str, th.text_secondary, "inter", 32)
   gfx:text(px + #temp_str * 14 + 5, content_y + 20, unit, th.text_muted, "inter", 24)
 
   -- Description

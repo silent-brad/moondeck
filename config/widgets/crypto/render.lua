@@ -101,11 +101,11 @@ function M.render(state, gfx)
     local change_str, change_status = format_change(state.changes[coin])
 
     -- Coin name
-    gfx:text(px, y, name, th.text_primary, "inter", 16)
+    gfx:text(px, y, name, th.text_secondary, "inter", 16)
 
     -- Price (center)
     local price_x = state.width / 2 - 30
-    gfx:text(price_x, y, price, th.text_primary, "inter", 16)
+    gfx:text(price_x, y, price, th.text_secondary, "inter", 16)
 
     -- Change (right)
     local change_color = th.text_muted

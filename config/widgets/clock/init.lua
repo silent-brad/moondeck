@@ -5,7 +5,7 @@ local M = {}
 function M.init(ctx)
   -- Set timezone on init (hours offset from UTC)
   -- Examples: -5 for EST, -4 for EDT, 0 for UTC, 1 for CET
-  local tz_offset = ctx.opts.timezone or -4 -- Default to EDT
+  local tz_offset = tonumber(ctx.opts.timezone) or -4 -- Default to EDT
   device.set_timezone(tz_offset)
 
   return {
@@ -73,7 +73,7 @@ function M.render(state, gfx)
   local time_x = state.width / 2 - (#time_str * 14) / 2
   local time_y = state.height / 2 - 10
 
-  gfx:text(time_x, time_y, time_str, th.text_primary, "inter", 32)
+  gfx:text(time_x, time_y, time_str, th.text_secondary, "inter", 32)
 
   -- Draw AM/PM indicator
   if not state.format_24h then

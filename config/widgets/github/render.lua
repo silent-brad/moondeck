@@ -145,7 +145,7 @@ local function render_repos(gfx, state, th, px, repo_y, repo_w)
         local pct_str = tostring(sp.pct) .. "%"
         local lbl_x = sp.x
         gfx:fill_circle(lbl_x + 4, label_y + 6, 3, sp.color)
-        gfx:text(lbl_x + 12, label_y, name_str .. " " .. pct_str, th.text_primary, "inter", 12)
+        gfx:text(lbl_x + 12, label_y, name_str .. " " .. pct_str, th.text_secondary, "inter", 12)
         labels_drawn = labels_drawn + 1
       end
     end
@@ -169,7 +169,7 @@ local function render_languages(gfx, state, th, right_x, right_w, section_y)
     local dot_color = colors.get_lang_color(lname) or th.text_muted
 
     gfx:fill_circle(right_x + 4, section_y + 7, 3, dot_color)
-    gfx:text(right_x + 14, section_y, lname, th.text_primary, "inter", 12)
+    gfx:text(right_x + 14, section_y, lname, th.text_secondary, "inter", 12)
 
     local pct_str = tostring(lpct) .. "%"
     local pct_w = #pct_str * 7
@@ -215,7 +215,7 @@ local function render_commits(gfx, state, th, right_x, right_w, section_y)
     if #m > 35 then
       m = string.sub(m, 1, 32) .. "..."
     end
-    gfx:text(right_x + 14, section_y + 13, m, th.text_primary, "inter", 12)
+    gfx:text(right_x + 14, section_y + 13, m, th.text_secondary, "inter", 12)
 
     -- Lines changed (colored) + language name
     local adds = ""

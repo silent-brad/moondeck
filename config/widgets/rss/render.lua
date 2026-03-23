@@ -70,7 +70,7 @@ function M.render(state, gfx)
 
     -- Title
     local title_text = truncate(entry.title, title_max_chars)
-    gfx:text(px + 15, y, title_text, th.text_primary, "inter", 14)
+    gfx:text(px + 15, y, title_text, th.text_secondary, "inter", 14)
 
     -- Feed name
     gfx:text(px + 15, y + 16, entry.feed, th.text_muted, "inter", 11)

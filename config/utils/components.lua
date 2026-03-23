@@ -51,7 +51,7 @@ function Components.title_bar(gfx, x, y, w, title, opts)
   opts = opts or {}
   local th = theme:get()
 
-  local color = opts.color or th.text_primary
+  local color = opts.color or th.text_secondary
   local accent = opts.accent or th.accent_primary
   local font_family = opts.font_family or "ebgaramond"
   local font_size = opts.font_size or 32
@@ -76,7 +76,7 @@ function Components.value_display(gfx, x, y, value, label, opts)
   opts = opts or {}
   local th = theme:get()
 
-  local value_color = opts.value_color or th.text_primary
+  local value_color = opts.value_color or th.text_secondary
   local label_color = opts.label_color or th.text_muted
   local value_font_family = opts.value_font_family or "inter"
   local value_font_size = opts.value_font_size or 32
@@ -100,8 +100,8 @@ function Components.item_row(gfx, x, y, w, label, value, opts)
   opts = opts or {}
   local th = theme:get()
 
-  local label_color = opts.label_color or th.text_secondary
-  local value_color = opts.value_color or th.text_primary
+  local label_color = opts.label_color or th.text_muted
+  local value_color = opts.value_color or th.text_secondary
   local indicator_color = opts.indicator or nil
   local font_family = opts.font_family or "inter"
   local font_size = opts.font_size or 16

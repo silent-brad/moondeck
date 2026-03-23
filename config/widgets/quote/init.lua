@@ -94,10 +94,10 @@ function M.render(state, gfx)
   -- Draw quote text
   for i = 1, #lines do
     if i > max_lines then
-      gfx:text(px + 15, text_start_y + (max_lines - 1) * line_height, "...", th.text_primary, "inter", 16)
+      gfx:text(px + 15, text_start_y + (max_lines - 1) * line_height, "...", th.text_secondary, "inter", 16)
       break
     end
-    gfx:text(px + 15, text_start_y + (i - 1) * line_height, lines[i], th.text_primary, "inter", 16)
+    gfx:text(px + 15, text_start_y + (i - 1) * line_height, lines[i], th.text_secondary, "inter", 16)
   end
 
   -- Author attribution
