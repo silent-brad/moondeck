@@ -262,7 +262,11 @@ fn main() -> Result<()> {
 
 fn load_env_config(fs: Option<&FileSystem>) -> EnvConfig {
     let embedded = include_str!("../../.env");
-    fs.and_then(|f| f.exists(".env").then(|| f.read_file(".env").ok()).flatten())
+    fs.and_then(|f| {
+        f.exists("config/.env")
+            .then(|| f.read_file("config/.env").ok())
+            .flatten()
+    })
         .map(|c| EnvConfig::load_from_str(&c))
         .or_else(|| (!embedded.is_empty()).then(|| EnvConfig::load_from_str(embedded)))
         .unwrap_or_else(EnvConfig::new)
@@ -388,11 +392,11 @@ fn run_loop(
         if current_reload != last_reload {
             last_reload = current_reload;
             info!("=== Reloading Lua config ===");
-            draw_loading_screen(&mut fb, display, "Reloading...", None)?;
             let env = load_env_config(Some(fs));
             if let Some(theme) = env.get("THEME") {
                 set_current_theme(theme);
             }
+            draw_loading_screen(&mut fb, display, "Reloading...", None)?;
             match init_lua_and_widgets(&env) {
                 Ok((new_lua, new_pm, new_plugins, new_bg)) => {
                     *lua = new_lua;

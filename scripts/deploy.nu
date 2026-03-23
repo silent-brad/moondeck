@@ -33,6 +33,12 @@ def main [
       }
       print $"uploaded ($files | length) file\(s)"
     }
+
+    # Always upload .env so environment variable changes take effect on reload
+    if (".env" | path exists) {
+      print "uploading .env"
+      http post $"($base_url)/upload?path=config/.env" (open --raw .env)
+    }
   }
 
   print "reloading..."
