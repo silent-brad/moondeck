@@ -39,6 +39,12 @@ function Color.mix(c1, c2, t)
   })
 end
 
+-- Perceived luminance of a hex color (0..1)
+function Color.luminance(hex)
+  local rgb = Color.parse(hex)
+  return (0.299 * rgb[1] + 0.587 * rgb[2] + 0.114 * rgb[3]) / 255
+end
+
 -- Blend a foreground hex color over a background hex color at given opacity (0..1)
 -- Equivalent to true alpha compositing on a solid background
 function Color.blend(bg, fg, opacity)

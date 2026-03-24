@@ -28,8 +28,9 @@ function Components.card(gfx, x, y, w, h, opts)
 
   -- Draw shadow layers (larger rects behind the card, blended toward bg)
   if shadow_layers > 0 and gfx.fill_rounded_rect then
+    local shadow_color = color_util.luminance(bg_page) < 0.3 and "#ffffff" or "#000000"
     for i = shadow_layers, 1, -1 do
-      local sc = color_util.blend(bg_page, "#000000", shadow_opacity * i)
+      local sc = color_util.blend(bg_page, shadow_color, shadow_opacity * i)
       gfx:fill_rounded_rect(x + i, y + i, w + i * 2, h + i * 2, radius + i, sc)
     end
   end

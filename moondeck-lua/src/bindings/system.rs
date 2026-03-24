@@ -155,6 +155,12 @@ pub fn register_device(lua: &mut Lua) -> Result<()> {
                 let offset = match offset_hours {
                     Value::Integer(h) => h * 3600,
                     Value::Number(h) => (h * 3600.0) as i64,
+                    Value::String(s) => s
+                        .to_str()
+                        .ok()
+                        .and_then(|s| s.trim().parse::<f64>().ok())
+                        .map(|h| (h * 3600.0) as i64)
+                        .unwrap_or(0),
                     _ => 0,
                 };
                 *TZ_OFFSET.write().unwrap() = offset;
