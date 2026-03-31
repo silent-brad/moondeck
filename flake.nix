@@ -117,6 +117,11 @@
             }
             export -f flash
 
+            # Generate partition table path config (must be absolute for esp-idf-sys)
+            if [ -f "$PWD/partitions.csv" ]; then
+              echo "CONFIG_PARTITION_TABLE_CUSTOM_FILENAME=\"$PWD/partitions.csv\"" > moondeck-app/sdkconfig.partitions
+            fi
+
             if [ -z "$MOONDECK_ENV_LOADED" ]; then
               export MOONDECK_ENV_LOADED=1
               echo ""
