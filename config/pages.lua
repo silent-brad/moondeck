@@ -27,6 +27,39 @@ return {
   page_switch_interval = env.get("PAGE_SWITCH_INTERVAL") or 60000, -- auto-switch pages every 1 minute (nil to disable)
   pages = {
     {
+      id = "dashboard",
+      title = "Dashboard",
+      layout = "quad",
+      widgets = {
+        {
+          widget = sysinfo,
+          update_interval = 1000,
+          opts = {},
+        },
+        {
+          widget = status,
+          update_interval = 1000,
+          opts = {},
+        },
+        {
+          widget = weather,
+          update_interval = 300000,
+          opts = {},
+        },
+        {
+          widget = clock,
+          update_interval = 1000,
+          opts = {
+            timezone = env.get("TIMEZONE"),
+            show_seconds = true,
+            show_date = true,
+            format_24h = false,
+          },
+        },
+      },
+    },
+
+    {
       id = "home",
       title = "Home",
       layout = "half_half",
@@ -60,42 +93,9 @@ return {
         },
         {
           widget = stocks,
-          update_interval = 6000,
+          update_interval = 60000,
           opts = {
             symbols = { "AAPL", "GOOGL", "PLTR", "TSLA", "MO" },
-          },
-        },
-      },
-    },
-
-    {
-      id = "dashboard",
-      title = "Dashboard",
-      layout = "quad",
-      widgets = {
-        {
-          widget = sysinfo,
-          update_interval = 1000,
-          opts = {},
-        },
-        {
-          widget = status,
-          update_interval = 1000,
-          opts = {},
-        },
-        {
-          widget = weather,
-          update_interval = 300000,
-          opts = {},
-        },
-        {
-          widget = clock,
-          update_interval = 1000,
-          opts = {
-            timezone = env.get("TIMEZONE"),
-            show_seconds = true,
-            show_date = true,
-            format_24h = false,
           },
         },
       },

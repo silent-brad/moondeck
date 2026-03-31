@@ -1,54 +1,78 @@
--- Stocks Widget: API fetching and response parsing
+-- Stocks Widget: API fetching via Yahoo Finance (no API key required)
 
 local M = {}
 
--- Fetch stock quotes from Finnhub API and populate state
+-- Fetch stock data from Yahoo Finance and populate state
+-- Uses /v8/finance/chart which returns current price, previous close,
+-- and historical data in a single request per symbol
 function M.fetch(state)
-  local api_key = env.get("STOCKS_API_KEY")
-  if not api_key then
-    return false, "No API key"
-  end
-
-  -- Finnhub only supports one symbol per request, fetch all symbols
   local success_count = 0
+  -- Use 7d range on first fetch (to seed history), 1d after that
+  local needs_history = false
+  for i = 1, #state.symbols do
+    local h = state.history[state.symbols[i]]
+    if not h or #h < 2 then
+      needs_history = true
+      break
+    end
+  end
+  local range = needs_history and "7d" or "1d"
+
   for i = 1, #state.symbols do
     local symbol = state.symbols[i]
-    local url = "https://finnhub.io/api/v1/quote?symbol=" .. symbol .. "&token=" .. api_key
+    local url = "https://query1.finance.yahoo.com/v8/finance/chart/"
+      .. symbol
+      .. "?range="
+      .. range
+      .. "&interval=1h&includePrePost=false"
 
-    local response = net.http_get(url, {}, 10000)
+    local response = net.http_get(url, {}, 15000)
 
     if response and response.ok and response.body then
       local data = net.json_decode(response.body)
 
-      if data and data.c then
-        state.prices[symbol] = data.c -- current price
-        state.changes[symbol] = data.dp -- percent change
-        success_count = success_count + 1
+      if data and data.chart and data.chart.result then
+        local result = data.chart.result[1]
+        if result and result.meta then
+          local meta = result.meta
+          -- Current price and percent change
+          if meta.regularMarketPrice then
+            state.prices[symbol] = meta.regularMarketPrice
+            if meta.previousClose and meta.previousClose > 0 then
+              state.changes[symbol] = (meta.regularMarketPrice - meta.previousClose)
+                / meta.previousClose
+                * 100
+            end
+            success_count = success_count + 1
+          end
 
-        -- Seed history from candle data on first fetch (when history is sparse)
-        if state.history and (not state.history[symbol] or #state.history[symbol] < 2) then
-          local now = math.floor(device.seconds() + 946684800)
-          local from = now - 86400 * 7
-          local candle_url = "https://finnhub.io/api/v1/stock/candle?symbol="
-            .. symbol
-            .. "&resolution=60&from="
-            .. from
-            .. "&to="
-            .. now
-            .. "&token="
-            .. api_key
-
-          local candle_resp = net.http_get(candle_url, {}, 10000)
-          if candle_resp and candle_resp.ok and candle_resp.body then
-            local candle_data = net.json_decode(candle_resp.body)
-            if candle_data and candle_data.s == "ok" and candle_data.c then
-              local closes = candle_data.c
-              local start = #closes > state.max_history and (#closes - state.max_history + 1) or 1
-              local points = {}
-              for j = start, #closes do
-                points[#points + 1] = closes[j]
+          -- Seed history from chart data when history is sparse
+          if state.history and (not state.history[symbol] or #state.history[symbol] < 2) then
+            if result.timestamp and result.indicators then
+              local quote = result.indicators.quote
+              if quote then
+                local closes = quote[1] and quote[1].close
+                if closes then
+                  local num_points = #result.timestamp
+                  local points = {}
+                  for j = 1, num_points do
+                    if closes[j] then
+                      points[#points + 1] = closes[j]
+                    end
+                  end
+                  if #points > state.max_history then
+                    local trimmed = {}
+                    local start = #points - state.max_history + 1
+                    for j = start, #points do
+                      trimmed[#trimmed + 1] = points[j]
+                    end
+                    points = trimmed
+                  end
+                  if #points >= 2 then
+                    state.history[symbol] = points
+                  end
+                end
               end
-              state.history[symbol] = points
             end
           end
         end

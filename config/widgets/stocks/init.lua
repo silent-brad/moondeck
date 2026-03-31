@@ -1,5 +1,5 @@
 -- Stocks Widget
--- Fetches stock prices from Finnhub.io API
+-- Fetches stock prices from Yahoo Finance (no API key required)
 
 local fetch = require("widgets.stocks.fetch")
 local render = require("widgets.stocks.render")
@@ -9,7 +9,7 @@ local M = {}
 function M.init(ctx)
   local symbols = ctx.opts.symbols or { "AAPL", "GOOGL" }
 
-  local fetch_interval = ctx.opts.fetch_interval or 60000 -- 1 minute (Finnhub allows 60 calls/min)
+  local fetch_interval = ctx.opts.fetch_interval or 60000
 
   local history = {}
   for i = 1, #symbols do

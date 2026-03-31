@@ -66,7 +66,7 @@ impl LuaRuntime {
 
     pub fn load_pages(&mut self) -> Result<(Vec<Page>, Option<u64>)> {
         self.load_pages_from_config().or_else(|e| {
-            log::warn!("Failed to load pages: {}, using demo", e);
+            log::warn!("Failed to load pages: {:?}, using demo", e);
             Ok((vec![Page::new("home", "Home")], None))
         })
     }
@@ -78,7 +78,7 @@ impl LuaRuntime {
             .and_then(|p| std::fs::read_to_string(format!("{}/pages.lua", p)).ok())
             .unwrap_or_else(|| EMBEDDED_PAGES_LUA.to_string());
 
-        // Run pages.lua in the main runtime so require() works
+        // Run pages.lua directly with manual stepping
         let stashed = self.lua.try_enter(|ctx| {
             let closure = Closure::load(ctx, Some("pages.lua".into()), lua_src.as_bytes())
                 .map_err(|e| anyhow::anyhow!("Compile error: {:?}", e))?;
@@ -87,17 +87,28 @@ impl LuaRuntime {
 
         let json_string: String = self.lua.enter(|ctx| {
             let exec = ctx.fetch(&stashed);
-            let mut fuel = Fuel::with(1000000);
+            let mut fuel = Fuel::with(10_000_000);
             while !exec.step(ctx, &mut fuel) {
                 if fuel.remaining() <= 0 {
-                    break;
+                    fuel = Fuel::with(10_000_000);
                 }
             }
             match exec.take_result::<Value>(ctx) {
                 Ok(Ok(Value::Table(t))) => {
                     serde_json::to_string(&table_to_json(ctx, t)).unwrap_or_default()
                 }
-                _ => String::new(),
+                Ok(Ok(other)) => {
+                    log::warn!("pages.lua returned non-table: {:?}", other);
+                    String::new()
+                }
+                Ok(Err(e)) => {
+                    log::warn!("pages.lua runtime error: {:?}", e);
+                    String::new()
+                }
+                Err(e) => {
+                    log::warn!("pages.lua execution incomplete: {:?}", e);
+                    String::new()
+                }
             }
         });
 
@@ -139,7 +150,24 @@ const COLS: i32 = 12;
 #[derive(Debug, Clone, serde::Deserialize)]
 struct PagesConfig {
     pages: Vec<PageConfig>,
+    #[serde(default, deserialize_with = "deserialize_string_or_u64")]
     page_switch_interval: Option<u64>,
+}
+
+/// Accept both string and number for page_switch_interval since env.get()
+/// returns strings from Lua which serialize as JSON strings.
+fn deserialize_string_or_u64<'de, D>(deserializer: D) -> std::result::Result<Option<u64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize;
+    let val = serde_json::Value::deserialize(deserializer)?;
+    match val {
+        serde_json::Value::Number(n) => Ok(n.as_u64()),
+        serde_json::Value::String(s) => Ok(s.parse::<u64>().ok()),
+        serde_json::Value::Null => Ok(None),
+        _ => Ok(None),
+    }
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -153,7 +181,9 @@ struct PageConfig {
 
 /// Empty Lua tables serialize as `{}` (object) rather than `[]` (array).
 /// Accept both forms so pages with no widgets don't fail to parse.
-fn deserialize_widgets_vec<'de, D>(deserializer: D) -> std::result::Result<Vec<WidgetConfig>, D::Error>
+fn deserialize_widgets_vec<'de, D>(
+    deserializer: D,
+) -> std::result::Result<Vec<WidgetConfig>, D::Error>
 where
     D: serde::Deserializer<'de>,
 {
