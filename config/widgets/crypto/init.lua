@@ -39,9 +39,9 @@ function M.update(state, delta_ms)
   state.last_fetch = state.last_fetch + delta_ms
 
   if state.last_fetch >= state.fetch_interval then
-    state.last_fetch = 0
     local ok, err = fetch.fetch(state)
     if ok then
+      state.last_fetch = 0
       state.error = nil
       -- Record price history
       for i = 1, #state.coins do
@@ -64,6 +64,7 @@ function M.update(state, delta_ms)
       end
     else
       state.error = err
+      state.last_fetch = state.fetch_interval - 10000
     end
     state.loading = false
   end

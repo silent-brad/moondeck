@@ -24,30 +24,8 @@ local github = require("widgets.github")
 local chess = require("widgets.chess")
 
 return {
-  page_switch_interval = 60000, -- auto-switch pages every 1 minute (nil to disable)
+  page_switch_interval = env.get("PAGE_SWITCH_INTERVAL") or 60000, -- auto-switch pages every 1 minute (nil to disable)
   pages = {
-    {
-      id = "stocks",
-      title = "Stocks",
-      layout = "half_half",
-      widgets = {
-        {
-          widget = crypto,
-          update_interval = 60000,
-          opts = {
-            coins = { "bitcoin", "ethereum", "solana", "monero" },
-          },
-        },
-        {
-          widget = stocks,
-          update_interval = 300000,
-          opts = {
-            symbols = { "AAPL", "GOOGL", "PLTR", "TSLA", "MO" },
-          },
-        },
-      },
-    },
-
     {
       id = "home",
       title = "Home",
@@ -64,6 +42,28 @@ return {
           widget = quote,
           update_interval = 60000,
           opts = {},
+        },
+      },
+    },
+
+    {
+      id = "stocks",
+      title = "Stocks",
+      layout = "half_half",
+      widgets = {
+        {
+          widget = crypto,
+          update_interval = 60000,
+          opts = {
+            coins = { "bitcoin", "ethereum", "solana", "monero" },
+          },
+        },
+        {
+          widget = stocks,
+          update_interval = 6000,
+          opts = {
+            symbols = { "AAPL", "GOOGL", "PLTR", "TSLA", "MO" },
+          },
         },
       },
     },

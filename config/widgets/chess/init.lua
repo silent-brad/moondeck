@@ -35,29 +35,31 @@ function M.update(state, delta_ms)
   state.last_fetch = state.last_fetch + delta_ms
 
   if state.last_fetch >= state.fetch_interval then
-    state.last_fetch = 0
-
     -- Fetch in phases to avoid blocking too long
     -- Phase 0: profile, Phase 1: stats, Phase 2: games
     if state.fetch_phase == 0 then
       local ok, err = fetch.fetch_profile(state)
       if not ok then
         state.error = err
+        state.last_fetch = state.fetch_interval - 10000
+      else
+        state.fetch_phase = 1
+        state.last_fetch = state.fetch_interval
       end
-      state.fetch_phase = 1
-      state.last_fetch = state.fetch_interval -- trigger next phase immediately
     elseif state.fetch_phase == 1 then
       local ok, err = fetch.fetch_stats(state)
       if not ok then
         state.error = err
+        state.last_fetch = state.fetch_interval - 10000
       else
         state.error = nil
+        state.fetch_phase = 2
+        state.last_fetch = state.fetch_interval
       end
-      state.fetch_phase = 2
-      state.last_fetch = state.fetch_interval
     else
       fetch.fetch_games(state)
       state.fetch_phase = 0
+      state.last_fetch = 0
       state.loading = false
     end
   end

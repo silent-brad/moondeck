@@ -26,8 +26,6 @@ function M.update(state, delta_ms)
   state.last_fetch = state.last_fetch + delta_ms
 
   if state.last_fetch >= state.fetch_interval then
-    state.last_fetch = 0
-
     -- Fetch random verse from bible-api.com
     local url = "https://bible-api.com/data/" .. state.translation .. "/random"
 
@@ -68,12 +66,15 @@ function M.update(state, delta_ms)
         state.verse_ref = verse.book .. " " .. verse.chapter .. ":" .. verse.verse
         state.loading = false
         state.error = nil
+        state.last_fetch = 0
       else
         state.error = "No verse data"
+        state.last_fetch = state.fetch_interval - 10000
         state.loading = false
       end
     else
       state.error = "Failed to fetch"
+      state.last_fetch = state.fetch_interval - 10000
       state.loading = false
     end
   end

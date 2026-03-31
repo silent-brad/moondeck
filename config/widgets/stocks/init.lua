@@ -9,7 +9,7 @@ local M = {}
 function M.init(ctx)
   local symbols = ctx.opts.symbols or { "AAPL", "GOOGL" }
 
-  local fetch_interval = ctx.opts.update_interval or 300000 -- 5 minutes
+  local fetch_interval = ctx.opts.fetch_interval or 60000 -- 1 minute (Finnhub allows 60 calls/min)
 
   local history = {}
   for i = 1, #symbols do
@@ -38,9 +38,9 @@ function M.update(state, delta_ms)
   state.last_fetch = state.last_fetch + delta_ms
 
   if state.last_fetch >= state.fetch_interval then
-    state.last_fetch = 0
     local ok, err = fetch.fetch(state)
     if ok then
+      state.last_fetch = 0
       state.error = nil
       -- Record price history
       for i = 1, #state.symbols do
@@ -62,6 +62,7 @@ function M.update(state, delta_ms)
       end
     else
       state.error = err
+      state.last_fetch = state.fetch_interval - 10000
     end
     state.loading = false
   end

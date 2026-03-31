@@ -333,12 +333,22 @@ function Components.line_graph(gfx, x, y, w, h, data, opts)
     y_positions[i] = y + graph_h - ((values[i] - min_y) / range * graph_h)
   end
 
-  -- Draw area fill (vertical lines from point to baseline)
+  -- Draw area fill (sweep every pixel column, interpolating between points)
   if do_fill then
     local base_y = y + graph_h
-    for i = 1, #values do
-      local px = math.floor(graph_x + (i - 1) * step)
-      local py = math.floor(y_positions[i])
+    local first_px = math.floor(graph_x)
+    local last_px = math.floor(graph_x + (#values - 1) * step)
+    for px = first_px, last_px do
+      local frac = (px - graph_x) / step
+      local idx = math.floor(frac) + 1
+      if idx < 1 then
+        idx = 1
+      end
+      if idx >= #values then
+        idx = #values - 1
+      end
+      local t = frac - (idx - 1)
+      local py = math.floor(y_positions[idx] + (y_positions[idx + 1] - y_positions[idx]) * t)
       if py < base_y then
         gfx:line(px, py, px, base_y, fill_color, 1)
       end
@@ -349,7 +359,14 @@ function Components.line_graph(gfx, x, y, w, h, data, opts)
   for i = 1, #values - 1 do
     local x1 = graph_x + (i - 1) * step
     local x2 = graph_x + i * step
-    gfx:line(math.floor(x1), math.floor(y_positions[i]), math.floor(x2), math.floor(y_positions[i + 1]), color, thickness)
+    gfx:line(
+      math.floor(x1),
+      math.floor(y_positions[i]),
+      math.floor(x2),
+      math.floor(y_positions[i + 1]),
+      color,
+      thickness
+    )
   end
 
   return h

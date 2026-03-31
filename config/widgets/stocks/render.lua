@@ -83,7 +83,7 @@ function M.render(state, gfx)
         color = chart_color,
         thickness = 1,
         fill = true,
-        show_grid = false,
+        show_grid = true,
       })
     end
 
