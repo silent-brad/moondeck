@@ -42,12 +42,12 @@ fn now_ms() -> u64 {
 fn seed_lua_config(fs: &FileSystem) {
     let _ = fs.create_dir("config");
 
-    // Only seed user-editable entry points; everything else is embedded in the
-    // binary
-    if !fs.exists("config/pages.lua") {
-        if let Err(e) = fs.write_file("config/pages.lua", EMBEDDED_PAGES_LUA) {
-            warn!("Failed to seed pages.lua: {}", e);
-        }
+    // Always overwrite pages.lua with the version embedded in the binary so
+    // that changes to config/pages.lua take effect after a rebuild.  Users
+    // can still live-edit via the HTTP upload endpoint; those edits persist
+    // until the next flash.
+    if let Err(e) = fs.write_file("config/pages.lua", EMBEDDED_PAGES_LUA) {
+        warn!("Failed to seed pages.lua: {}", e);
     }
     info!("Lua config seeded on SPIFFS");
 }
