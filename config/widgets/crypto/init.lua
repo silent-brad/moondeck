@@ -12,6 +12,11 @@ function M.init(ctx)
 
   local fetch_interval = ctx.opts.update_interval or 60000
 
+  local history = {}
+  for i = 1, #coins do
+    history[coins[i]] = {}
+  end
+
   return {
     x = ctx.x,
     y = ctx.y,
@@ -21,6 +26,8 @@ function M.init(ctx)
     currency = currency,
     prices = {},
     changes = {},
+    history = history,
+    max_history = 30,
     last_fetch = fetch_interval,
     fetch_interval = fetch_interval,
     loading = true,
@@ -36,6 +43,25 @@ function M.update(state, delta_ms)
     local ok, err = fetch.fetch(state)
     if ok then
       state.error = nil
+      -- Record price history
+      for i = 1, #state.coins do
+        local coin = state.coins[i]
+        if state.prices[coin] then
+          local h = state.history[coin]
+          if not h then
+            h = {}
+            state.history[coin] = h
+          end
+          h[#h + 1] = state.prices[coin]
+          if #h > state.max_history then
+            -- Shift array left
+            for j = 1, #h - 1 do
+              h[j] = h[j + 1]
+            end
+            h[#h] = nil
+          end
+        end
+      end
     else
       state.error = err
     end

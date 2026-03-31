@@ -67,7 +67,7 @@ end
 function M.render(state, gfx)
   -- Get theme colors directly from the global theme module
   local th = theme:get()
-  local px, py = 15, 10
+  local px, py = 20, 15
 
   -- Draw card
   components.card(gfx, 0, 0, state.width, state.height)

@@ -246,6 +246,115 @@ function Components.icon(gfx, x, y, size, letter, opts)
   return size
 end
 
+-- Compact line graph with optional axes, labels, grid, and area fill
+-- data: array of numbers OR array of {x, y} points
+-- opts:
+--   color         - line color (default: accent_primary)
+--   thickness     - line thickness (default: 2)
+--   grid_color    - grid line color (default: border_primary)
+--   label_color   - axis label color (default: text_muted)
+--   show_grid     - show horizontal grid lines (default: false)
+--   show_y_labels - show Y-axis value labels (default: false)
+--   y_label_fmt   - format string for y-axis labels (default: "%.0f")
+--   grid_lines    - number of horizontal grid lines (default: 3)
+--   fill          - fill area under the line (default: false)
+--   fill_color    - fill color (default: blended line color)
+function Components.line_graph(gfx, x, y, w, h, data, opts)
+  opts = opts or {}
+  local th = theme:get()
+
+  local color = opts.color or th.accent_primary
+  local thickness = opts.thickness or 2
+  local grid_color = opts.grid_color or th.border_primary
+  local label_color = opts.label_color or th.text_muted
+  local show_grid = opts.show_grid or false
+  local show_y_labels = opts.show_y_labels or false
+  local y_label_fmt = opts.y_label_fmt or "%.0f"
+  local grid_lines = opts.grid_lines or 3
+  local do_fill = opts.fill or false
+  local fill_color = opts.fill_color or color_util.blend(th.bg_card, color, 0.25)
+
+  if not data or #data < 2 then
+    return h
+  end
+
+  -- Normalize data: accept plain number arrays or {x, y} tables
+  local values = {}
+  for i = 1, #data do
+    if type(data[i]) == "table" then
+      values[i] = data[i].y
+    else
+      values[i] = data[i]
+    end
+  end
+
+  -- Reserve space for labels only when shown
+  local label_w = show_y_labels and 40 or 0
+  local graph_x = x + label_w
+  local graph_w = w - label_w
+  local graph_h = h
+
+  -- Find min/max
+  local min_y, max_y = values[1], values[1]
+  for i = 2, #values do
+    if values[i] < min_y then
+      min_y = values[i]
+    end
+    if values[i] > max_y then
+      max_y = values[i]
+    end
+  end
+
+  local range = max_y - min_y
+  if range == 0 then
+    range = 1
+  end
+  local padding = range * 0.05
+  min_y = min_y - padding
+  max_y = max_y + padding
+  range = max_y - min_y
+
+  -- Draw grid lines and optional Y labels
+  if show_grid then
+    for i = 0, grid_lines do
+      local gy = y + graph_h - (i / grid_lines) * graph_h
+      gfx:line(graph_x, math.floor(gy), graph_x + graph_w, math.floor(gy), grid_color, 1)
+      if show_y_labels then
+        local val = min_y + (i / grid_lines) * range
+        gfx:text(x, math.floor(gy) - 5, util.format(y_label_fmt, val), label_color, "inter", 10)
+      end
+    end
+  end
+
+  -- Precompute Y positions
+  local step = graph_w / (#values - 1)
+  local y_positions = {}
+  for i = 1, #values do
+    y_positions[i] = y + graph_h - ((values[i] - min_y) / range * graph_h)
+  end
+
+  -- Draw area fill (vertical lines from point to baseline)
+  if do_fill then
+    local base_y = y + graph_h
+    for i = 1, #values do
+      local px = math.floor(graph_x + (i - 1) * step)
+      local py = math.floor(y_positions[i])
+      if py < base_y then
+        gfx:line(px, py, px, base_y, fill_color, 1)
+      end
+    end
+  end
+
+  -- Draw data line
+  for i = 1, #values - 1 do
+    local x1 = graph_x + (i - 1) * step
+    local x2 = graph_x + i * step
+    gfx:line(math.floor(x1), math.floor(y_positions[i]), math.floor(x2), math.floor(y_positions[i + 1]), color, thickness)
+  end
+
+  return h
+end
+
 -- Loading indicator
 function Components.loading(gfx, x, y, text)
   local th = theme:get()

@@ -27,22 +27,10 @@ return {
   page_switch_interval = 60000, -- auto-switch pages every 1 minute (nil to disable)
   pages = {
     {
-      id = "home",
-      title = "Home",
-      layout = "quad",
+      id = "stocks",
+      title = "Stocks",
+      layout = "half_half",
       widgets = {
-        {
-          widget = chess,
-          update_interval = 300000,
-          opts = {
-            username = env.get("CHESS_USERNAME"),
-          },
-        },
-        {
-          widget = quote,
-          update_interval = 60000,
-          opts = {},
-        },
         {
           widget = crypto,
           update_interval = 60000,
@@ -56,6 +44,26 @@ return {
           opts = {
             symbols = { "AAPL", "GOOGL", "PLTR", "TSLA", "MO" },
           },
+        },
+      },
+    },
+
+    {
+      id = "home",
+      title = "Home",
+      layout = "half_half",
+      widgets = {
+        {
+          widget = chess,
+          update_interval = 300000,
+          opts = {
+            username = env.get("CHESS_USERNAME"),
+          },
+        },
+        {
+          widget = quote,
+          update_interval = 60000,
+          opts = {},
         },
       },
     },

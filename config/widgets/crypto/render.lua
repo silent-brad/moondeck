@@ -87,6 +87,8 @@ function M.render(state, gfx)
 
   -- Display each coin
   local row_height = 30
+  local chart_w = 60
+  local chart_h = 18
   local max_rows = math.floor((state.height - content_y - py) / row_height)
 
   for i = 1, #state.coins do
@@ -103,8 +105,26 @@ function M.render(state, gfx)
     -- Coin name
     gfx:text(px, y, name, th.text_secondary, "inter", 16)
 
-    -- Price (center)
-    local price_x = state.width / 2 - 30
+    -- Mini chart
+    local chart_x = px + 45
+    local history = state.history and state.history[coin]
+    if history and #history >= 2 then
+      local chart_color = th.accent_primary
+      if change_status == "ok" then
+        chart_color = th.accent_success
+      elseif change_status == "error" then
+        chart_color = th.accent_error
+      end
+      components.line_graph(gfx, chart_x, y + 1, chart_w, chart_h, history, {
+        color = chart_color,
+        thickness = 1,
+        fill = true,
+        show_grid = false,
+      })
+    end
+
+    -- Price (after chart)
+    local price_x = chart_x + chart_w + 8
     gfx:text(price_x, y, price, th.text_secondary, "inter", 16)
 
     -- Change (right)
