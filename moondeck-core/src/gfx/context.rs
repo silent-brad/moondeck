@@ -116,6 +116,19 @@ impl<'a, T: DrawTarget<Color = Rgb565>> DrawContext<'a, T> {
         let _ = Pixel(self.pt(x, y), Rgb565::from(color)).draw(self.target);
     }
 
+    pub fn draw_image(&mut self, x: i32, y: i32, pixels: &[u16], img_w: u32, img_h: u32) {
+        for py in 0..img_h as i32 {
+            for px in 0..img_w as i32 {
+                let raw = pixels[(py as u32 * img_w + px as u32) as usize];
+                let r = ((raw >> 11) & 0x1F) as u8;
+                let g = ((raw >> 5) & 0x3F) as u8;
+                let b = (raw & 0x1F) as u8;
+                let color = Rgb565::new(r, g, b);
+                let _ = Pixel(self.pt(x + px, y + py), color).draw(self.target);
+            }
+        }
+    }
+
     pub fn text_ttf(&mut self, x: i32, y: i32, s: &str, color: Color, font: TtfFont) {
         self.text_bitmap(
             x,

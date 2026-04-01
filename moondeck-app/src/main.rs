@@ -17,7 +17,7 @@ use esp_idf_svc::{
 };
 use log::*;
 use moondeck_core::{
-    gfx::{Color, DrawContext, DISPLAY_HEIGHT, DISPLAY_WIDTH},
+    gfx::{Color, DrawContext, ImageCache, DISPLAY_HEIGHT, DISPLAY_WIDTH},
     ui::{Event, Gesture, PageManager, WidgetInstance},
     util::FrameTimer,
     TtfFont,
@@ -269,9 +269,9 @@ fn load_env_config(fs: Option<&FileSystem>) -> EnvConfig {
             .then(|| f.read_file("config/.env").ok())
             .flatten()
     })
-        .map(|c| EnvConfig::load_from_str(&c))
-        .or_else(|| (!embedded.is_empty()).then(|| EnvConfig::load_from_str(embedded)))
-        .unwrap_or_else(EnvConfig::new)
+    .map(|c| EnvConfig::load_from_str(&c))
+    .or_else(|| (!embedded.is_empty()).then(|| EnvConfig::load_from_str(embedded)))
+    .unwrap_or_else(EnvConfig::new)
 }
 
 fn init_wifi(
@@ -386,6 +386,7 @@ fn run_loop(
     let mut last_page = pm.current_index();
     let mut last_reload = reload_gen.load(Ordering::SeqCst);
     let mut last_page_switch = now_ms();
+    let mut image_cache = ImageCache::new(16);
 
     loop {
         let now = now_ms();
@@ -410,6 +411,7 @@ fn run_loop(
                     page_switch_interval = new_interval;
                     last_page = pm.current_index();
                     last_page_switch = now;
+                    image_cache.clear();
                     info!("=== Reload complete ===");
                 }
                 Err(e) => {
@@ -497,7 +499,7 @@ fn run_loop(
                             && w.context.x == widget.context.x
                             && w.context.y == widget.context.y
                     }) {
-                        let _ = plugin.render(lua, &widget.context, &mut ctx);
+                        let _ = plugin.render(lua, &widget.context, &mut ctx, &mut image_cache);
                     }
                 }
             }

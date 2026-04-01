@@ -48,6 +48,13 @@ pub enum DrawCommand {
         family: String,
         size: u32,
     },
+    Image {
+        x: i32,
+        y: i32,
+        w: u32,
+        h: u32,
+        path: String,
+    },
 }
 
 #[derive(Clone, Default)]
@@ -135,6 +142,13 @@ fn font_size(val: Value) -> u32 {
     }
 }
 
+fn string_val(val: Value) -> String {
+    match val {
+        Value::String(s) => s.to_str().unwrap_or("").to_string(),
+        _ => String::new(),
+    }
+}
+
 fn text_val(val: Value) -> String {
     match val {
         Value::String(s) => s.to_str().unwrap_or("").to_string(),
@@ -195,6 +209,11 @@ pub fn register_gfx(lua: &mut Lua) -> Result<()> {
 
         // Clear command (no offset needed but macro requires it)
         gfx_draw!(gfx, ctx, "clear", (c) => |_ox, _oy| DrawCommand::Clear { color: color(c) });
+
+        // Image command: gfx:draw_image(x, y, w, h, path)
+        gfx_draw!(gfx, ctx, "draw_image", (x, y, w, h, path) => |ox, oy| DrawCommand::Image {
+            x: i32(x) + ox, y: i32(y) + oy, w: u32(w), h: u32(h), path: string_val(path)
+        });
 
         ctx.set_global("gfx", gfx)?;
         Ok(())

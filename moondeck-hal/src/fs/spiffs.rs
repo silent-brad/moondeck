@@ -50,6 +50,17 @@ impl FileSystem {
             .with_context(|| format!("Failed to write file: {}", full_path))
     }
 
+    pub fn read_file_bytes(&self, relative_path: &str) -> Result<Vec<u8>> {
+        let full_path = self.path(relative_path);
+        fs::read(&full_path).with_context(|| format!("Failed to read file: {}", full_path))
+    }
+
+    pub fn write_file_bytes(&self, relative_path: &str, content: &[u8]) -> Result<()> {
+        let full_path = self.path(relative_path);
+        fs::write(&full_path, content)
+            .with_context(|| format!("Failed to write file: {}", full_path))
+    }
+
     pub fn exists(&self, relative_path: &str) -> bool {
         let full_path = self.path(relative_path);
         Path::new(&full_path).exists()

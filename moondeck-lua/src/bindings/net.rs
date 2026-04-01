@@ -82,6 +82,32 @@ pub fn register_net(lua: &mut Lua) -> Result<()> {
             }),
         )?;
 
+        // net.download(url, path, timeout_ms?) -> { ok, error? }
+        net.set(
+            ctx,
+            "download",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (url, path, timeout): (LuaString, LuaString, Value) = stack.consume(ctx)?;
+                let result = do_download(
+                    url.to_str().unwrap_or(""),
+                    path.to_str().unwrap_or(""),
+                    parse_timeout(timeout),
+                );
+                let response = Table::new(&ctx);
+                match result {
+                    Ok(()) => {
+                        let _ = response.set(ctx, "ok", true);
+                    }
+                    Err(e) => {
+                        let _ = response.set(ctx, "ok", false);
+                        let _ = response.set(ctx, "error", ctx.intern(e.as_bytes()));
+                    }
+                }
+                stack.replace(ctx, response);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
         ctx.set_global("net", net)?;
         Ok(())
     })?;
@@ -164,6 +190,30 @@ fn do_http_post(
         })
 }
 
+#[cfg(feature = "esp")]
+fn do_download(url: &str, path: &str, timeout_ms: u32) -> Result<(), String> {
+    use moondeck_hal::HttpClient;
+    log::info!("Download: {} -> {}", url, path);
+    let client = HttpClient::with_timeout(timeout_ms);
+
+    let mut retries = 3;
+    loop {
+        let (status, bytes) = client.get_bytes(url).map_err(|e| format!("{}", e))?;
+        if status == 429 && retries > 0 {
+            retries -= 1;
+            log::warn!("HTTP 429 for {}, retrying in 2s ({} left)", url, retries);
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            continue;
+        }
+        if !(200..300).contains(&status) {
+            return Err(format!("HTTP {}", status));
+        }
+        std::fs::write(path, &bytes).map_err(|e| format!("Write error: {}", e))?;
+        log::info!("Downloaded {} bytes to {}", bytes.len(), path);
+        return Ok(());
+    }
+}
+
 #[cfg(not(feature = "esp"))]
 fn do_http_get(_: &str, _: &HashMap<String, String>, _: u32) -> Result<(u16, String), String> {
     Err("HTTP not available in this build".into())
@@ -176,5 +226,10 @@ fn do_http_post(
     _: &HashMap<String, String>,
     _: u32,
 ) -> Result<(u16, String), String> {
+    Err("HTTP not available in this build".into())
+}
+
+#[cfg(not(feature = "esp"))]
+fn do_download(_: &str, _: &str, _: u32) -> Result<(), String> {
     Err("HTTP not available in this build".into())
 }

@@ -39,9 +39,7 @@ function M.fetch(state)
           if meta.regularMarketPrice then
             state.prices[symbol] = meta.regularMarketPrice
             if meta.previousClose and meta.previousClose > 0 then
-              state.changes[symbol] = (meta.regularMarketPrice - meta.previousClose)
-                / meta.previousClose
-                * 100
+              state.changes[symbol] = (meta.regularMarketPrice - meta.previousClose) / meta.previousClose * 100
             end
             success_count = success_count + 1
           end

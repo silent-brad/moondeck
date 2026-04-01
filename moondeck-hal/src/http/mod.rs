@@ -47,6 +47,24 @@ impl HttpClient {
         Ok(String::from_utf8_lossy(&body).to_string())
     }
 
+    fn read_body_bytes(client: &mut EspHttpConnection) -> Result<Vec<u8>> {
+        let mut body = Vec::new();
+        let mut buf = [0u8; 1024];
+        loop {
+            match client.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    body.extend_from_slice(&buf[..n]);
+                    if body.len() > Self::MAX_BODY_SIZE {
+                        return Err(anyhow::anyhow!("Response body too large"));
+                    }
+                }
+                Err(e) => return Err(anyhow::anyhow!("Read error: {:?}", e)),
+            }
+        }
+        Ok(body)
+    }
+
     fn create_config(&self) -> HttpConfig {
         HttpConfig {
             timeout: Some(std::time::Duration::from_millis(self.timeout_ms as u64)),
@@ -57,6 +75,28 @@ impl HttpClient {
 
     pub fn get(&self, url: &str) -> Result<HttpResponse> {
         self.get_with_headers(url, &[])
+    }
+
+    pub fn get_bytes(&self, url: &str) -> Result<(u16, Vec<u8>)> {
+        let config = self.create_config();
+        let mut client =
+            EspHttpConnection::new(&config).context("Failed to create HTTP connection")?;
+        client
+            .initiate_request(
+                esp_idf_svc::http::Method::Get,
+                url,
+                &[
+                    ("Connection", "close"),
+                    ("User-Agent", "Moondeck/0.1 (ESP32-S3; +https://github.com/silent-brad/moondeck-v2)"),
+                ],
+            )
+            .context("Failed to initiate request")?;
+        client
+            .initiate_response()
+            .context("Failed to initiate response")?;
+        let status = client.status();
+        let body = Self::read_body_bytes(&mut client)?;
+        Ok((status, body))
     }
 
     pub fn get_with_headers(&self, url: &str, headers: &[(&str, &str)]) -> Result<HttpResponse> {

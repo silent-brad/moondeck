@@ -22,6 +22,7 @@ local rss = require("widgets.rss")
 local stocks = require("widgets.stocks")
 local github = require("widgets.github")
 local chess = require("widgets.chess")
+local slideshow = require("widgets.slideshow")
 
 return {
   page_switch_interval = env.get("PAGE_SWITCH_INTERVAL") or 60000, -- auto-switch pages every 1 minute (nil to disable)
@@ -128,6 +129,28 @@ return {
           widget = github,
           update_interval = 3000,
           opts = {},
+        },
+      },
+    },
+
+    {
+      id = "gallery",
+      title = "Lord Leighton",
+      layout = "full",
+      widgets = {
+        {
+          widget = slideshow,
+          update_interval = 1000,
+          opts = {
+            interval = 10,
+            fetch_urls = {
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Leighton_The_Painter-s_Honeymoon_1864.jpg/200px-Leighton_The_Painter-s_Honeymoon_1864.jpg",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Flaming_June%2C_by_Frederic_Lord_Leighton_%281830-1896%29.jpg/200px-Flaming_June%2C_by_Frederic_Lord_Leighton_%281830-1896%29.jpg",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Golden_hours%2C_by_Frederic_Leighton.jpg/200px-Golden_hours%2C_by_Frederic_Leighton.jpg",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Amarilla_Leighton.jpg/200px-Amarilla_Leighton.jpg",
+              "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Frederick_Leighton_-_The_golden_hours.jpg/200px-Frederick_Leighton_-_The_golden_hours.jpg",
+            },
+          },
         },
       },
     },

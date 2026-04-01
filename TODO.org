@@ -42,4 +42,5 @@
   CLOSED: [2026-03-30 Mon 18:41]
 * DONE Fix HTTP error widget handling
   CLOSED: [2026-03-30 Mon 18:55]
+* TODO Add images
 * TODO Faster startup time?

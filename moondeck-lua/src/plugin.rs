@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use embedded_graphics::{pixelcolor::Rgb565, prelude::DrawTarget};
 use moondeck_core::{
-    gfx::DrawContext,
+    gfx::{DrawContext, ImageCache},
     ui::{Event, Gesture, WidgetContext},
     TtfFont,
 };
@@ -41,11 +41,13 @@ impl WidgetPlugin {
     }
 
     pub fn init(&mut self, runtime: &mut LuaRuntime, ctx: &WidgetContext) -> Result<()> {
+        // Prefer embedded source (always in sync with the binary) over SPIFFS,
+        // falling back to SPIFFS for user-uploaded widgets not in the embedded set.
         let fs_source = runtime.read_widget_source(&self.module);
-        let source: std::borrow::Cow<'_, str> = if let Some(ref s) = fs_source {
-            s.as_str().into()
-        } else if let Some(s) = self.get_source() {
+        let source: std::borrow::Cow<'_, str> = if let Some(s) = self.get_source() {
             s.into()
+        } else if let Some(ref s) = fs_source {
+            s.as_str().into()
         } else {
             log::warn!("Widget not found: {}", self.module);
             self.initialized = true;
@@ -82,7 +84,14 @@ impl WidgetPlugin {
                     )?;
                     match exec.take_result::<Value>(lctx)? {
                         Ok(Value::Table(t)) => Some(lctx.stash(t)),
-                        _ => None,
+                        Ok(other) => {
+                            log::warn!("Widget {} init returned non-table: {:?}", module_name, other);
+                            None
+                        }
+                        Err(e) => {
+                            log::error!("Widget {} init error: {:?}", module_name, e);
+                            None
+                        }
                     }
                 } else {
                     None
@@ -131,6 +140,7 @@ impl WidgetPlugin {
         runtime: &mut LuaRuntime,
         ctx: &WidgetContext,
         draw_ctx: &mut DrawContext<'_, T>,
+        image_cache: &mut ImageCache,
     ) -> Result<()> {
         if !self.initialized {
             return Ok(());
@@ -163,7 +173,7 @@ impl WidgetPlugin {
             Ok(())
         })?;
 
-        execute_draw_commands(draw_cmds.take_commands(), ctx, draw_ctx);
+        execute_draw_commands(draw_cmds.take_commands(), ctx, draw_ctx, image_cache);
         Ok(())
     }
 
@@ -275,6 +285,7 @@ fn execute_draw_commands<T: DrawTarget<Color = Rgb565>>(
     commands: Vec<DrawCommand>,
     ctx: &WidgetContext,
     draw_ctx: &mut DrawContext<'_, T>,
+    image_cache: &mut ImageCache,
 ) {
     for cmd in commands {
         match cmd {
@@ -325,6 +336,27 @@ fn execute_draw_commands<T: DrawTarget<Color = Rgb565>>(
                     _ => TtfFont::inter(size),
                 };
                 draw_ctx.text_ttf(x, y, &text, color, ttf);
+            }
+            DrawCommand::Image { x, y, w, h, path } => {
+                if !image_cache.contains(&path) {
+                    match std::fs::read(&path) {
+                        Ok(bytes) => {
+                            let ext = path.rsplit('.').next().unwrap_or("");
+                            let result = match ext {
+                                "jpg" | "jpeg" => image_cache.decode_jpeg_to_rgb565(&path, &bytes),
+                                "rgb565" => image_cache.load_rgb565(&path, &bytes, w, h),
+                                _ => Err(anyhow::anyhow!("Unsupported image format: {}", ext)),
+                            };
+                            if let Err(e) = result {
+                                log::error!("Failed to load image {}: {}", path, e);
+                            }
+                        }
+                        Err(e) => log::error!("Failed to read image file {}: {}", path, e),
+                    }
+                }
+                if let Some(img) = image_cache.get(&path) {
+                    draw_ctx.draw_image(x, y, &img.pixels, img.width, img.height);
+                }
             }
         }
     }
