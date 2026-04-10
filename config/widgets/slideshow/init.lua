@@ -34,7 +34,7 @@ function M.init(ctx)
     images = images,
     current = 1,
     timer = 0,
-    interval = (ctx.opts.interval or 5) * 1000,
+    interval = (ctx.opts.slide_interval or ctx.opts.interval or 5) * 1000,
   }
 end
 

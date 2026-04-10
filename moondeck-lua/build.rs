@@ -102,10 +102,6 @@ fn generate_embedded_lua(manifest_dir: &str, out_dir: &str) {
 
 fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
     let themes_dir = Path::new(manifest_dir).join("../config/themes");
-    // Read the themes/init.lua for default theme, and individual theme files for
-    // colors
-    let init_path = themes_dir.join("init.lua");
-    let init_content = fs::read_to_string(&init_path).expect("Failed to read themes/init.lua");
 
     // Discover theme files dynamically from config/themes/
     let mut content = String::new();
@@ -144,11 +140,8 @@ fn generate_embedded_themes(manifest_dir: &str, out_dir: &str) {
             content.push_str("}\n\n");
         }
     }
-    // Append init content so parse_default_theme can find `current`
-    content.push_str(&init_content);
-
     let themes = parse_themes(&content);
-    let default_theme = parse_default_theme(&content);
+    let default_theme = "dark".to_string();
 
     let mut code = String::new();
     code.push_str("/// Auto-generated theme definitions from config/theme.lua\n\n");
@@ -301,19 +294,4 @@ fn parse_themes(content: &str) -> HashMap<String, HashMap<String, String>> {
     themes
 }
 
-/// Parse the default theme from theme.lua (the "current" field)
-fn parse_default_theme(content: &str) -> String {
-    for line in content.lines() {
-        let line = line.trim();
-        // Match: current = "light",
-        if line.starts_with("current") && line.contains(" = ") {
-            if let Some((_, value)) = line.split_once(" = ") {
-                let value = value.trim().trim_end_matches(',');
-                if value.starts_with('"') && value.ends_with('"') {
-                    return value.trim_matches('"').to_string();
-                }
-            }
-        }
-    }
-    "dark".to_string()
-}
+

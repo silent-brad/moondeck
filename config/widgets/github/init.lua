@@ -1,74 +1,38 @@
 -- GitHub Widget
--- Displays contribution heatmap, latest commits, and language breakdown
 
+local base = require("utils.widget_base")
 local fetch = require("widgets.github.fetch")
 local render = require("widgets.github.render")
 
-local M = {}
-
-function M.init(ctx)
-  local fetch_interval = ctx.opts.update_interval or 3600000
-
-  return {
-    x = ctx.x,
-    y = ctx.y,
-    width = ctx.width,
-    height = ctx.height,
-    username = ctx.opts.username or env.get("GITHUB_USERNAME") or "",
-    weeks = {},
-    total = 0,
-    commit_repos = {},
-    commit_msgs = {},
-    commit_dates = {},
-    commit_lines = {},
-    commit_langs = {},
-    commit_count = 0,
-    lang_names = {},
-    lang_pcts = {},
-    lang_count = 0,
-    repo_names = {},
-    repo_descs = {},
-    repo_visibilities = {},
-    repo_pushed = {},
-    repo_lang_names = {},
-    repo_lang_pcts = {},
-    repo_lang_colors = {},
-    repo_lang_counts = {},
-    repo_count = 0,
-    last_fetch = fetch_interval,
-    fetch_interval = fetch_interval,
-    loading = true,
-    error = nil,
-  }
-end
-
-function M.update(state, delta_ms)
-  state.last_fetch = state.last_fetch + delta_ms
-
-  if state.last_fetch >= state.fetch_interval then
-    local ok, err = fetch.fetch(state)
-    if ok then
-      state.last_fetch = 0
-      state.error = nil
-    else
-      state.error = err
-      state.last_fetch = state.fetch_interval - 10000
-    end
-    state.loading = false
-  end
-end
-
-function M.render(state, gfx)
-  render.render(state, gfx)
-end
-
-function M.on_event(state, event)
-  if event.type == "tap" then
-    state.last_fetch = state.fetch_interval
-    state.loading = true
-    return true
-  end
-  return false
-end
-
-return M
+return base.new({
+  fetch_interval = 3600000,
+  setup = function(state, ctx)
+    state.username = ctx.opts.username or env.get("GITHUB_USERNAME") or ""
+    state.weeks = {}
+    state.total = 0
+    state.commit_repos = {}
+    state.commit_msgs = {}
+    state.commit_dates = {}
+    state.commit_lines = {}
+    state.commit_langs = {}
+    state.commit_count = 0
+    state.lang_names = {}
+    state.lang_pcts = {}
+    state.lang_count = 0
+    state.repo_names = {}
+    state.repo_descs = {}
+    state.repo_visibilities = {}
+    state.repo_pushed = {}
+    state.repo_lang_names = {}
+    state.repo_lang_pcts = {}
+    state.repo_lang_colors = {}
+    state.repo_lang_counts = {}
+    state.repo_count = 0
+  end,
+  fetch = function(state)
+    return fetch.fetch(state)
+  end,
+  render = function(state, gfx)
+    render.render(state, gfx)
+  end,
+})

@@ -214,16 +214,11 @@ pub fn register_modules(lua: &mut Lua) -> Result<()> {
                 if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
                     let _ = loaded.set(ctx, ctx.intern(name.as_bytes()), m);
                 }
-                // Alias utils.components as "components" and utils.layout as "layout"
+                // Alias utils.components as "components"
                 if name == "utils.components" {
                     ctx.set_global("__components_module", m)?;
                     if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
                         let _ = loaded.set(ctx, "components", m);
-                    }
-                } else if name == "utils.layout" {
-                    ctx.set_global("__layout_module", m)?;
-                    if let Value::Table(loaded) = ctx.globals().get(ctx, "__loaded_modules") {
-                        let _ = loaded.set(ctx, "layout", m);
                     }
                 }
             }
@@ -248,7 +243,6 @@ fn setup_require<'gc>(
 
             let result = match name_str {
                 "theme" | "themes" => ctx.globals().get(ctx, "__theme_module"),
-                "layout" | "utils.layout" => ctx.globals().get(ctx, "__layout_module"),
                 "components" | "utils.components" if final_version => {
                     ctx.globals().get(ctx, "__components_module")
                 }

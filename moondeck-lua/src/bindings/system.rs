@@ -348,6 +348,62 @@ pub fn register_util(lua: &mut Lua) -> Result<()> {
             }),
         )?;
 
+        // util.color_blend(bg, fg, opacity) -> integer color
+        util.set(
+            ctx,
+            "color_blend",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (a1, a2, a3, a4): (Value, Value, Value, Value) = stack.consume(ctx)?;
+                // Handle method-call style (util:color_blend) or function style
+                let (bg, fg, opacity) = if matches!(a1, Value::Table(_)) {
+                    (a2, a3, a4)
+                } else {
+                    (a1, a2, a3)
+                };
+
+                let bg_str = match bg {
+                    Value::String(s) => s.to_str().unwrap_or("#000000").to_string(),
+                    _ => "#000000".to_string(),
+                };
+                let fg_str = match fg {
+                    Value::String(s) => s.to_str().unwrap_or("#ffffff").to_string(),
+                    _ => "#ffffff".to_string(),
+                };
+                let t = match opacity {
+                    Value::Number(n) => n,
+                    Value::Integer(i) => i as f64,
+                    _ => 0.5,
+                };
+
+                let result = color_blend_rgb(&bg_str, &fg_str, t);
+                stack.replace(ctx, result);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
+        // util.color_luminance(hex) -> float 0..1
+        util.set(
+            ctx,
+            "color_luminance",
+            Callback::from_fn(&ctx, |ctx, _exec, mut stack| {
+                let (a1, a2): (Value, Value) = stack.consume(ctx)?;
+                let hex = if matches!(a1, Value::Table(_)) {
+                    a2
+                } else {
+                    a1
+                };
+
+                let hex_str = match hex {
+                    Value::String(s) => s.to_str().unwrap_or("#000000").to_string(),
+                    _ => "#000000".to_string(),
+                };
+
+                let result = color_luminance(&hex_str);
+                stack.replace(ctx, result);
+                Ok(CallbackReturn::Return)
+            }),
+        )?;
+
         ctx.set_global("util", util)?;
         Ok(())
     })?;
@@ -426,6 +482,32 @@ fn format_string(fmt: &str, args: &[Value]) -> String {
         }
     }
     result
+}
+
+// ============================================================================
+// Color Helpers
+// ============================================================================
+
+fn parse_hex_color(hex: &str) -> (u8, u8, u8) {
+    let hex = hex.trim_start_matches('#');
+    let r = u8::from_str_radix(&hex[0..2], 16).unwrap_or(0);
+    let g = u8::from_str_radix(&hex[2..4], 16).unwrap_or(0);
+    let b = u8::from_str_radix(&hex[4..6], 16).unwrap_or(0);
+    (r, g, b)
+}
+
+fn color_blend_rgb(bg: &str, fg: &str, t: f64) -> i64 {
+    let (br, bg_g, bb) = parse_hex_color(bg);
+    let (fr, fg_g, fb) = parse_hex_color(fg);
+    let r = (br as f64 + (fr as f64 - br as f64) * t) as i64;
+    let g = (bg_g as f64 + (fg_g as f64 - bg_g as f64) * t) as i64;
+    let b = (bb as f64 + (fb as f64 - bb as f64) * t) as i64;
+    r * 65536 + g * 256 + b
+}
+
+fn color_luminance(hex: &str) -> f64 {
+    let (r, g, b) = parse_hex_color(hex);
+    (0.299 * r as f64 + 0.587 * g as f64 + 0.114 * b as f64) / 255.0
 }
 
 fn format_value(spec: &str, value: &Value) -> String {

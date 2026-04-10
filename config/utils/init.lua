@@ -5,7 +5,6 @@ print("Moondeck initializing...")
 
 -- Load core modules (these are made available globally)
 theme = require("themes")
-layout = require("utils.layout")
 components = require("utils.components")
 
 -- Set theme from environment (or use default from themes/init.lua)
